@@ -5,7 +5,7 @@
     {% set tool_name = 'budget_title' %}
     {% set tool_icon = 'fa-calculator' %}
     {% set subtitle = t('budget_subtitle', default='Plan and manage your finances effectively') %}
-    {% include 'personal/GENERAL/tool_header.html' %}
+    {% include 'tool_header.html' %}
 
     <ul class="nav nav-tabs mb-4" id="budgetTabs" role="tablist">
         <li class="nav-item" role="presentation">
@@ -22,7 +22,7 @@
 
     <div class="tab-content" id="budgetTabContent">
         <div class="tab-pane fade {{ 'show active' if active_tab == 'create-budget' else '' }}" id="create-budget" role="tabpanel" aria-labelledby="create-budget-tab">
-            <form method="POST" action="{{ url_for('personal.budget.main') }}" id="budgetForm" class="validate-form">
+            <form method="POST" action="{{ url_for('budget.main') }}" id="budgetForm" class="validate-form">
                 {{ form.csrf_token }}
                 <input type="hidden" name="action" value="create_budget">
 
@@ -216,7 +216,7 @@
                                                             {{ budget.get('surplus_deficit_formatted', '0.00') }}
                                                         </td>
                                                         <td>
-                                                            <form method="POST" action="{{ url_for('personal.budget.main') }}" style="display: inline;">
+                                                            <form method="POST" action="{{ url_for('budget.main') }}" style="display: inline;">
                                                                 {{ form.csrf_token }}
                                                                 <input type="hidden" name="budget_id" value="{{ budget_id }}">
                                                                 <input type="hidden" name="action" value="delete">
