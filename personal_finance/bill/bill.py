@@ -14,7 +14,7 @@ from session_utils import create_anonymous_session
 from decimal import Decimal, InvalidOperation
 import re
 
-bill_bp = Blueprint('bill', __name__, template_folder='templates/personal/BILL', url_prefix='/bill')
+bill_bp = Blueprint('bill', __name__, template_folder='templates/', url_prefix='/bill')
 
 csrf = CSRFProtect()
 
@@ -514,7 +514,7 @@ def main():
                                 bills_collection.delete_one({'_id': bill_id})
                                 current_app.logger.error(f"Failed to deduct Ficore Credit for adding bill {bill_id} by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
                                 flash(trans('bill_credit_deduction_failed', default='Failed to deduct Ficore Credit for adding bill.'), 'danger')
-                                return redirect(url_for('personal.bill.main', tab='add-bill'))
+                                return redirect(url_for('bill.main', tab='add-bill'))
                         current_app.logger.info(f"Bill {bill_id} added successfully for user {bill_data['user_email']}", extra={'session_id': session.get('sid', 'unknown')})
                         flash(trans('bill_added_success', default='Bill added successfully!'), 'success')
                         if cleaned_data['send_email'] and bill_data['user_email']:
@@ -536,8 +536,8 @@ def main():
                                             'category': bill_data['category'],
                                             'status': bill_data['status']
                                         }],
-                                        'cta_url': url_for('personal.bill.main', _external=True),
-                                        'unsubscribe_url': url_for('personal.bill.unsubscribe', _external=True)
+                                        'cta_url': url_for('bill.main', _external=True),
+                                        'unsubscribe_url': url_for('bill.unsubscribe', _external=True)
                                     },
                                     lang=session.get('lang', 'en')
                                 )
@@ -547,31 +547,31 @@ def main():
                                 flash(trans('general_email_send_failed', default='Failed to send email.'), 'warning')
                         if cleaned_data['amount'] > 100000:
                             insights.append(trans('bill_insight_large_amount', default='Large bill amount detected. Consider reviewing for accuracy or splitting payments.'))
-                        return redirect(url_for('personal.bill.main', tab='dashboard'))
+                        return redirect(url_for('bill.main', tab='dashboard'))
                     else:
                         for field, errors in form.errors.items():
                             for error in errors:
                                 flash(trans(error, default=error), 'danger')
-                        return redirect(url_for('personal.bill.main', tab='add-bill'))
+                        return redirect(url_for('bill.main', tab='add-bill'))
                 except ValueError as e:
                     current_app.logger.error(f"Form validation error: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
                     flash(str(e), 'danger')
-                    return redirect(url_for('personal.bill.main', tab='add-bill'))
+                    return redirect(url_for('bill.main', tab='add-bill'))
                 except DuplicateKeyError:
                     current_app.logger.error(f"Duplicate bill error for session {session['sid']}", extra={'session_id': session.get('sid', 'unknown')})
                     flash(trans('bill_duplicate_error', default='A bill with this name already exists.'), 'danger')
-                    return redirect(url_for('personal.bill.main', tab='add-bill'))
+                    return redirect(url_for('bill.main', tab='add-bill'))
                 except Exception as e:
                     current_app.logger.error(f"Failed to save bill to MongoDB: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
                     flash(trans('bill_storage_error', default='Error saving bill.'), 'danger')
-                    return redirect(url_for('personal.bill.main', tab='add-bill'))
+                    return redirect(url_for('bill.main', tab='add-bill'))
             elif action in ['update_bill', 'delete_bill', 'toggle_status']:
                 bill_id = request.form.get('bill_id')
                 bill = bills_collection.find_one({'_id': ObjectId(bill_id), **filter_kwargs})
                 if not bill:
                     current_app.logger.warning(f"Bill {bill_id} not found for update/delete/toggle", extra={'session_id': session.get('sid', 'unknown')})
                     flash(trans('bill_not_found', default='Bill not found.'), 'danger')
-                    return redirect(url_for('personal.bill.main', tab='manage-bills'))
+                    return redirect(url_for('bill.main', tab='manage-bills'))
                 if current_user.is_authenticated and not is_admin():
                     if not check_ficore_credit_balance(required_amount=1, user_id=current_user.id):
                         current_app.logger.warning(f"Insufficient Ficore Credits for {action} on bill {bill_id} by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
@@ -606,7 +606,7 @@ def main():
                                 if not deduct_ficore_credits(db, current_user.id, 1, 'update_bill', bill_id):
                                     current_app.logger.error(f"Failed to deduct Ficore Credit for updating bill {bill_id} by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
                                     flash(trans('bill_credit_deduction_failed', default='Failed to deduct Ficore Credit for updating bill.'), 'danger')
-                                    return redirect(url_for('personal.bill.main', tab='manage-bills'))
+                                    return redirect(url_for('bill.main', tab='manage-bills'))
                             current_app.logger.info(f"Bill {bill_id} updated successfully", extra={'session_id': session.get('sid', 'unknown')})
                             flash(trans('bill_updated_success', default='Bill updated successfully!'), 'success')
                             if cleaned_data['amount'] > 100000:
@@ -615,15 +615,15 @@ def main():
                             for field, errors in edit_form.errors.items():
                                 for error in errors:
                                     flash(trans(error, default=error), 'danger')
-                            return redirect(url_for('personal.bill.main', tab='manage-bills'))
+                            return redirect(url_for('bill.main', tab='manage-bills'))
                     except ValueError as e:
                         current_app.logger.error(f"Form validation error: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
                         flash(str(e), 'danger')
-                        return redirect(url_for('personal.bill.main', tab='manage-bills'))
+                        return redirect(url_for('bill.main', tab='manage-bills'))
                     except Exception as e:
                         current_app.logger.error(f"Failed to update bill {bill_id}: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
                         flash(trans('bill_update_failed', default='Failed to update bill.'), 'danger')
-                    return redirect(url_for('personal.bill.main', tab='manage-bills'))
+                    return redirect(url_for('bill.main', tab='manage-bills'))
                 elif action == 'delete_bill':
                     try:
                         log_tool_usage(
@@ -638,13 +638,13 @@ def main():
                             if not deduct_ficore_credits(db, current_user.id, 1, 'delete_bill', bill_id):
                                 current_app.logger.error(f"Failed to deduct Ficore Credit for deleting bill {bill_id} by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
                                 flash(trans('bill_credit_deduction_failed', default='Failed to deduct Ficore Credit for deleting bill.'), 'danger')
-                                return redirect(url_for('personal.bill.main', tab='manage-bills'))
+                                return redirect(url_for('bill.main', tab='manage-bills'))
                         current_app.logger.info(f"Bill {bill_id} deleted successfully", extra={'session_id': session.get('sid', 'unknown')})
                         flash(trans('bill_deleted_success', default='Bill deleted successfully!'), 'success')
                     except Exception as e:
                         current_app.logger.error(f"Failed to delete bill {bill_id}: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
                         flash(trans('bill_delete_failed', default='Failed to delete bill.'), 'danger')
-                    return redirect(url_for('personal.bill.main', tab='manage-bills'))
+                    return redirect(url_for('bill.main', tab='manage-bills'))
                 elif action == 'toggle_status':
                     new_status = 'paid' if bill['status'] == 'unpaid' else 'unpaid'
                     try:
@@ -660,7 +660,7 @@ def main():
                             if not deduct_ficore_credits(db, current_user.id, 1, 'toggle_bill_status', bill_id):
                                 current_app.logger.error(f"Failed to deduct Ficore Credit for toggling status of bill {bill_id} by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
                                 flash(trans('bill_credit_deduction_failed', default='Failed to deduct Ficore Credit for toggling bill status.'), 'danger')
-                                return redirect(url_for('personal.bill.main', tab='manage-bills'))
+                                return redirect(url_for('bill.main', tab='manage-bills'))
                         if new_status == 'paid' and bill['frequency'] != 'one-time':
                             try:
                                 due_date = bill['due_date']
@@ -678,7 +678,7 @@ def main():
                                         bills_collection.delete_one({'_id': new_bill['_id']})
                                         current_app.logger.error(f"Failed to deduct Ficore Credit for adding recurring bill {new_bill['_id']} by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
                                         flash(trans('bill_credit_deduction_failed', default='Failed to deduct Ficore Credit for adding recurring bill.'), 'danger')
-                                        return redirect(url_for('personal.bill.main', tab='manage-bills'))
+                                        return redirect(url_for('bill.main', tab='manage-bills'))
                                 current_app.logger.info(f"Recurring bill {new_bill['_id']} created for {bill['bill_name']}", extra={'session_id': session.get('sid', 'unknown')})
                                 flash(trans('bill_new_recurring_bill_success', default='New recurring bill created for {bill_name}.').format(bill_name=bill['bill_name']), 'success')
                             except Exception as e:
@@ -689,7 +689,7 @@ def main():
                     except Exception as e:
                         current_app.logger.error(f"Failed to toggle bill status {bill_id}: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
                         flash(trans('bill_status_toggle_failed', default='Failed to toggle bill status.'), 'danger')
-                    return redirect(url_for('personal.bill.main', tab='manage-bills'))
+                    return redirect(url_for('bill.main', tab='manage-bills'))
 
         bills = bills_collection.find(filter_kwargs).sort('created_at', -1).limit(100)
         bills_data = []
@@ -775,7 +775,7 @@ def main():
         if total_overdue > total_bills * 0.3:
             insights.append(trans('bill_insight_high_overdue', default='Overdue bills exceed 30% of total bills. Prioritize clearing overdue amounts.'))
         return render_template(
-            'personal/BILL/bill_main.html',
+            'bill_main.html',
             form=form,
             bills_data=bills_data,
             edit_forms=edit_forms,
@@ -802,7 +802,7 @@ def main():
         current_app.logger.error(f"Error in bill.main: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans('bill_dashboard_load_error', default='Error loading bill dashboard.'), 'danger')
         return render_template(
-            'personal/BILL/bill_main.html',
+            'bill_main.html',
             form=form,
             bills_data=[],
             edit_forms={},
@@ -888,15 +888,15 @@ def unsubscribe():
         else:
             current_app.logger.warning(f"No records updated for email {current_user.email if current_user.is_authenticated else 'anonymous'} during unsubscribe", extra={'session_id': session.get('sid', 'unknown')})
             flash(trans('bill_unsubscribe_failed', default='No matching email found or already unsubscribed.'), 'danger')
-        return redirect(url_for('personal.bill.main', tab='manage-bills'))
+        return redirect(url_for('bill.main', tab='manage-bills'))
     except Exception as e:
         current_app.logger.error(f"Error in bill.unsubscribe: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans('bill_unsubscribe_error', default='Error processing unsubscribe request.'), 'danger')
-        return redirect(url_for('personal.bill.main', tab='manage-bills'))
+        return redirect(url_for('bill.main', tab='manage-bills'))
 
 @bill_bp.errorhandler(CSRFError)
 def handle_csrf_error(e):
     """Handle CSRF errors with user-friendly message."""
     current_app.logger.error(f"CSRF error on {request.path}: {e.description}", extra={'session_id': session.get('sid', 'unknown')})
     flash(trans('bill_csrf_error', default='Form submission failed due to a missing security token. Please refresh and try again.'), 'danger')
-    return redirect(url_for('personal.bill.main', tab='add-bill')), 403
+    return redirect(url_for('bill.main', tab='add-bill')), 403
