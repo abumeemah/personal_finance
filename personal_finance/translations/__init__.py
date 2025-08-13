@@ -50,9 +50,6 @@ translation_modules = {
     'budget': BUDGET_TRANSLATIONS,
     'shopping': SHOPPING_TRANSLATIONS,
     
-    # Accounting Tools
-    'admin': ADMIN_TRANSLATIONS,
-    'reports': REPORTS_TRANSLATIONS,
     
     # General Tools
     'general': GENERAL_TRANSLATIONS,
