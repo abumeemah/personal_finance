@@ -479,20 +479,11 @@ def create_app():
         raise
 
     # Register blueprints
-    from users.routes import users_bp
-    from agents.routes import agents_bp
-    from creditors.routes import creditors_bp
     from dashboard.routes import dashboard_bp
-    from debtors.routes import debtors_bp
-    from payments.routes import payments_bp
-    from receipts.routes import receipts_bp
     from reports.routes import reports_bp
     from settings.routes import settings_bp
-    from personal import personal_bp
     from general.routes import general_bp
     from admin.routes import admin_bp
-    from taxation.routes import taxation_bp
-    from ai import ai_bp
     
     app.register_blueprint(users_bp, url_prefix='/users')
     logger.info('Registered users blueprint')
