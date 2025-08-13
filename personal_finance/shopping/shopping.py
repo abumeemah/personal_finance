@@ -24,7 +24,7 @@ import json
 shopping_bp = Blueprint(
     'shopping',
     __name__,
-    template_folder='templates/personal/SHOPPING',
+    template_folder='templates/',
     url_prefix='/shopping'
 )
 
@@ -393,10 +393,10 @@ def main():
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                         return jsonify({
                             'success': True,
-                            'redirect_url': url_for('personal.shopping.main', tab='add-items', list_id=str(list_data['_id']))
+                            'redirect_url': url_for('shopping.main', tab='add-items', list_id=str(list_data['_id']))
                         })
                     flash(trans('shopping_list_created', default='Shopping list created successfully!'), 'success')
-                    return redirect(url_for('personal.shopping.main', tab='add-items', list_id=str(list_data['_id'])))
+                    return redirect(url_for('shopping.main', tab='add-items', list_id=str(list_data['_id'])))
                 except Exception as e:
                     logger.error(f"Failed to save list {list_data['_id']}: {str(e)}", exc_info=True)
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -405,7 +405,7 @@ def main():
                             'error': trans('shopping_list_error', default=f'Error saving list: {str(e)}')
                         }), 500
                     flash(trans('shopping_list_error', default=f'Error saving list: {str(e)}'), 'danger')
-                    return redirect(url_for('personal.shopping.main', tab='create-list'))
+                    return redirect(url_for('shopping.main', tab='create-list'))
             else:
                 errors = {field: [trans(error, default=error) for error in field_errors] for field, field_errors in list_form.errors.items()}
                 logger.debug(f"Form validation failed: {errors}", extra={'session_id': session.get('sid', 'no-session-id')})
@@ -419,7 +419,7 @@ def main():
                     for error in field_errors:
                         flash(f"{field.capitalize()}: {trans(error, default=error)}", 'danger')
                 return render_template(
-                    'personal/SHOPPING/create_list.html',
+                    'create_list.html',
                     list_form=list_form,
                     item_form=item_form,
                     share_form=share_form,
@@ -445,11 +445,11 @@ def main():
             list_id = request.form.get('list_id')
             if not ObjectId.is_valid(list_id):
                 flash(trans('shopping_invalid_list_id', default='Invalid list ID.'), 'danger')
-                return redirect(url_for('personal.shopping.main', tab='add-items'))
+                return redirect(url_for('shopping.main', tab='add-items'))
             shopping_list = db.shopping_lists.find_one({'_id': ObjectId(list_id), **filter_criteria})
             if not shopping_list:
                 flash(trans('shopping_list_not_found', default='List not found.'), 'danger')
-                return redirect(url_for('personal.shopping.main', tab='add-items'))
+                return redirect(url_for('shopping.main', tab='add-items'))
             # Check for duplicate item names
             existing_items = db.shopping_items.find({'list_id': list_id}, {'name': 1})
             existing_names = {item['name'].lower() for item in existing_items}
@@ -470,7 +470,7 @@ def main():
             for item_data in new_items:
                 if item_data['name'].lower() in existing_names:
                     flash(trans('shopping_duplicate_item_name', default='Item name already exists in this list.'), 'danger')
-                    return redirect(url_for('personal.shopping.main', tab='add-items', list_id=list_id))
+                    return redirect(url_for('shopping.main', tab='add-items', list_id=list_id))
             added = 0
             for item_data in new_items:
                 try:
@@ -518,18 +518,18 @@ def main():
                 flash(trans('shopping_items_added', default=f'{added} item(s) added successfully!'), 'success')
                 if total_spent > shopping_list['budget']:
                     flash(trans('shopping_over_budget', default='Warning: Total spent exceeds budget by ') + format_currency(total_spent - shopping_list['budget']) + '.', 'warning')
-            return redirect(url_for('personal.shopping.main', tab='add-items', list_id=list_id))
+            return redirect(url_for('shopping.main', tab='add-items', list_id=list_id))
 
         elif action == 'save_list':
             list_id = request.form.get('list_id')
             if not ObjectId.is_valid(list_id):
                 flash(trans('shopping_invalid_list_id', default='Invalid list ID.'), 'danger')
-                return redirect(url_for('personal.shopping.main', tab='dashboard'))
+                return redirect(url_for('shopping.main', tab='dashboard'))
             filter_criteria = {} if is_admin() else {'user_id': str(current_user.id)} if current_user.is_authenticated else {'session_id': session['sid']}
             shopping_list = db.shopping_lists.find_one({'_id': ObjectId(list_id), **filter_criteria})
             if not shopping_list:
                 flash(trans('shopping_list_not_found', default='List not found.'), 'danger')
-                return redirect(url_for('personal.shopping.main', tab='dashboard'))
+                return redirect(url_for('shopping.main', tab='dashboard'))
             # Check for duplicate item names
             existing_items = db.shopping_items.find({'list_id': list_id}, {'name': 1})
             existing_names = {item['name'].lower() for item in existing_items}
@@ -552,7 +552,7 @@ def main():
             for item_data in new_items:
                 if item_data['name'].lower() in existing_names:
                     flash(trans('shopping_duplicate_item_name', default='Item name already exists in this list.'), 'danger')
-                    return redirect(url_for('personal.shopping.main', tab='dashboard', list_id=list_id))
+                    return redirect(url_for('shopping.main', tab='dashboard', list_id=list_id))
             added = 0
             try:
                 with db.client.start_session() as mongo_session:
@@ -600,7 +600,7 @@ def main():
                             if current_user.is_authenticated and not is_admin():
                                 if not deduct_ficore_credits(db, current_user.id, 1, 'save_shopping_list', list_id, mongo_session):
                                     flash(trans('shopping_credit_deduction_failed', default='Failed to deduct credits for saving list.'), 'danger')
-                                    return redirect(url_for('personal.shopping.main', tab='dashboard', list_id=list_id))
+                                    return redirect(url_for('shopping.main', tab='dashboard', list_id=list_id))
                             get_shopping_lists.cache_clear()
                             flash(trans('shopping_list_saved', default=f'{added} item(s) saved successfully!'), 'success')
                             if total_spent > shopping_list['budget']:
@@ -608,21 +608,21 @@ def main():
             except Exception as e:
                 logger.error(f"Failed to save list {list_id}: {str(e)}")
                 flash(trans('shopping_list_error', default='Error saving list.'), 'danger')
-            return redirect(url_for('personal.shopping.main', tab='dashboard', list_id=list_id))
+            return redirect(url_for('shopping.main', tab='dashboard', list_id=list_id))
 
         elif action == 'share_list' and share_form.validate_on_submit():
             list_id = request.form.get('list_id')
             if not ObjectId.is_valid(list_id):
                 flash(trans('shopping_invalid_list_id', default='Invalid list ID.'), 'danger')
-                return redirect(url_for('personal.shopping.main', tab='view-lists'))
+                return redirect(url_for('shopping.main', tab='view-lists'))
             shopping_list = db.shopping_lists.find_one({'_id': ObjectId(list_id), **filter_criteria})
             if not shopping_list:
                 flash(trans('shopping_list_not_found', default='List not found.'), 'danger')
-                return redirect(url_for('personal.shopping.main', tab='view-lists'))
+                return redirect(url_for('shopping.main', tab='view-lists'))
             collaborator = db.users.find_one({'email': share_form.email.data})
             if not collaborator:
                 flash(trans('shopping_user_not_found', default='User with this email not found.'), 'danger')
-                return redirect(url_for('personal.shopping.main', tab='view-lists'))
+                return redirect(url_for('shopping.main', tab='view-lists'))
             try:
                 db.shopping_lists.update_one(
                     {'_id': ObjectId(list_id)},
@@ -632,17 +632,17 @@ def main():
             except Exception as e:
                 logger.error(f"Error sharing list {list_id}: {str(e)}")
                 flash(trans('shopping_share_error', default='Error sharing list.'), 'danger')
-            return redirect(url_for('personal.shopping.main', tab='view-lists'))
+            return redirect(url_for('shopping.main', tab='view-lists'))
 
         elif action == 'delete_list':
             list_id = request.form.get('list_id')
             if not ObjectId.is_valid(list_id):
                 flash(trans('shopping_invalid_list_id', default='Invalid list ID.'), 'danger')
-                return redirect(url_for('personal.shopping.main', tab='view-lists'))
+                return redirect(url_for('shopping.main', tab='view-lists'))
             shopping_list = db.shopping_lists.find_one({'_id': ObjectId(list_id), **filter_criteria})
             if not shopping_list:
                 flash(trans('shopping_list_not_found', default='List not found.'), 'danger')
-                return redirect(url_for('personal.shopping.main', tab='view-lists'))
+                return redirect(url_for('shopping.main', tab='view-lists'))
             if current_user.is_authenticated and not is_admin():
                 if not check_ficore_credit_balance(required_amount=1, user_id=current_user.id):
                     flash(trans('shopping_insufficient_credits', default='Insufficient credits to delete list.'), 'danger')
@@ -655,14 +655,14 @@ def main():
                         if current_user.is_authenticated and not is_admin():
                             if not deduct_ficore_credits(db, current_user.id, 1, 'delete_shopping_list', list_id, mongo_session):
                                 flash(trans('shopping_credit_deduction_failed', default='Failed to deduct credits for deletion.'), 'danger')
-                                return redirect(url_for('personal.shopping.main', tab='view-lists'))
+                                return redirect(url_for('shopping.main', tab='view-lists'))
                 if session.get('selected_list_id') == list_id:
                     session.pop('selected_list_id', None)
                 flash(trans('shopping_list_deleted', default='List deleted successfully!'), 'success')
             except Exception as e:
                 logger.error(f"Error deleting list {list_id}: {str(e)}")
                 flash(trans('shopping_list_error', default='Error deleting list.'), 'danger')
-            return redirect(url_for('personal.shopping.main', tab='view-lists'))
+            return redirect(url_for('shopping.main', tab='view-lists'))
 
     lists_dict = {}
     for lst in lists.values():
@@ -714,7 +714,7 @@ def main():
         list_form.budget.data = selected_list.get('budget_raw', 0.0)
 
     return render_template(
-        f'personal/SHOPPING/{template_map[active_tab]}',
+        f'{template_map[active_tab]}',
         list_form=list_form,
         item_form=item_form,
         share_form=share_form,
@@ -780,7 +780,7 @@ def get_list_details():
     
     try:
         html = render_template(
-            'personal/SHOPPING/manage_list_details.html',
+            'manage_list_details.html',
             list_form=ShoppingListForm(data={'name': selected_list['name'], 'budget': selected_list['budget_raw']}),
             item_form=ShoppingItemsForm(),
             selected_list=selected_list,
@@ -804,11 +804,11 @@ def manage_list(list_id):
     try:
         if not ObjectId.is_valid(list_id):
             flash(trans('shopping_invalid_list_id', default='Invalid list ID.'), 'danger')
-            return redirect(url_for('personal.shopping.main', tab='manage-list'))
+            return redirect(url_for('shopping.main', tab='manage-list'))
         shopping_list = db.shopping_lists.find_one({'_id': ObjectId(list_id), **filter_criteria})
         if not shopping_list:
             flash(trans('shopping_list_not_found', default='List not found.'), 'danger')
-            return redirect(url_for('personal.shopping.main', tab='manage-list'))
+            return redirect(url_for('shopping.main', tab='manage-list'))
 
         if request.method == 'POST':
             action = request.form.get('action')
@@ -821,7 +821,7 @@ def manage_list(list_id):
                         raise ValueError
                 except ValueError:
                     flash(trans('shopping_budget_invalid', default='Invalid budget value.'), 'danger')
-                    return redirect(url_for('personal.shopping.main', tab='manage-list', list_id=list_id))
+                    return redirect(url_for('shopping.main', tab='manage-list', list_id=list_id))
                 # Check for duplicate item names
                 existing_items = db.shopping_items.find({'list_id': list_id}, {'name': 1})
                 existing_names = {item['name'].lower() for item in existing_items}
@@ -842,7 +842,7 @@ def manage_list(list_id):
                 for item_data in new_items:
                     if item_data['name'].lower() in existing_names:
                         flash(trans('shopping_duplicate_item_name', default='Item name already exists in this list.'), 'danger')
-                        return redirect(url_for('personal.shopping.main', tab='manage-list', list_id=list_id))
+                        return redirect(url_for('shopping.main', tab='manage-list', list_id=list_id))
                 added = 0
                 edited = 0
                 deleted = 0
@@ -852,7 +852,7 @@ def manage_list(list_id):
                         new_status = 'saved' if request.form.get('save_list') else shopping_list.get('status', 'active')
                         if shopping_list['status'] == 'saved' and new_status == 'active':
                             flash(trans('shopping_invalid_status_transition', default='Cannot change saved list back to active.'), 'danger')
-                            return redirect(url_for('personal.shopping.main', tab='manage-list', list_id=list_id))
+                            return redirect(url_for('shopping.main', tab='manage-list', list_id=list_id))
                         if request.form.get('item_id'):
                             item_id = request.form.get('item_id')
                             if ObjectId.is_valid(item_id):
@@ -874,10 +874,10 @@ def manage_list(list_id):
                                 }
                                 if new_item_data['name'].lower() in existing_names and new_item_data['name'].lower() != db.shopping_items.find_one({'_id': ObjectId(item_id), 'list_id': list_id}, {'name': 1})['name'].lower():
                                     flash(trans('shopping_duplicate_item_name', default='Item name already exists in this list.'), 'danger')
-                                    return redirect(url_for('personal.shopping.main', tab='manage-list', list_id=list_id))
+                                    return redirect(url_for('shopping.main', tab='manage-list', list_id=list_id))
                                 if new_item_data['quantity'] < 1 or new_item_data['quantity'] > 1000 or new_item_data['price'] < 0 or new_item_data['price'] > 1000000 or new_item_data['frequency'] < 1 or new_item_data['frequency'] > 365:
                                     flash(trans('shopping_item_error', default='Invalid input range for edited item.'), 'danger')
-                                    return redirect(url_for('personal.shopping.main', tab='manage-list', list_id=list_id))
+                                    return redirect(url_for('shopping.main', tab='manage-list', list_id=list_id))
                                 db.shopping_items.update_one(
                                     {'_id': ObjectId(item_id), 'list_id': list_id},
                                     {'$set': new_item_data},
@@ -939,17 +939,17 @@ def manage_list(list_id):
                                 return redirect(url_for('dashboard.index'))
                             if not deduct_ficore_credits(db, current_user.id, required_credits, 'save_shopping_list_changes', list_id, mongo_session):
                                 flash(trans('shopping_credit_deduction_failed', default='Failed to deduct credits for changes.'), 'danger')
-                                return redirect(url_for('personal.shopping.main', tab='manage-list', list_id=list_id))
+                                return redirect(url_for('shopping.main', tab='manage-list', list_id=list_id))
                         get_shopping_lists.cache_clear()
                 flash(trans('shopping_changes_saved', default='Changes saved successfully!'), 'success')
                 if total_spent > new_budget and new_budget > 0:
                     flash(trans('shopping_over_budget', default='Warning: Total spent exceeds budget by ') + format_currency(total_spent - new_budget) + '.', 'warning')
-                return redirect(url_for('personal.shopping.main', tab='manage-list', list_id=list_id))
+                return redirect(url_for('shopping.main', tab='manage-list', list_id=list_id))
             elif action == 'delete_item':
                 item_id = request.form.get('item_id')
                 if not ObjectId.is_valid(item_id):
                     flash(trans('shopping_invalid_item_id', default='Invalid item ID.'), 'danger')
-                    return redirect(url_for('personal.shopping.main', tab='manage-list', list_id=list_id))
+                    return redirect(url_for('shopping.main', tab='manage-list', list_id=list_id))
                 with db.client.start_session() as mongo_session:
                     with mongo_session.start_transaction():
                         db.shopping_items.delete_one({'_id': ObjectId(item_id), 'list_id': list_id}, session=mongo_session)
@@ -963,10 +963,10 @@ def manage_list(list_id):
                         if current_user.is_authenticated and not is_admin():
                             if not deduct_ficore_credits(db, current_user.id, 1, 'delete_shopping_item', item_id, mongo_session):
                                 flash(trans('shopping_credit_deduction_failed', default='Failed to deduct credits for item deletion.'), 'danger')
-                                return redirect(url_for('personal.shopping.main', tab='manage-list', list_id=list_id))
+                                return redirect(url_for('shopping.main', tab='manage-list', list_id=list_id))
                         get_shopping_lists.cache_clear()
                 flash(trans('shopping_item_deleted', default='Item deleted successfully!'), 'success')
-                return redirect(url_for('personal.shopping.main', tab='manage-list', list_id=list_id))
+                return redirect(url_for('shopping.main', tab='manage-list', list_id=list_id))
 
         lists = list(db.shopping_lists.find(filter_criteria).sort('created_at', -1))
         lists_dict = {}
@@ -1024,7 +1024,7 @@ def manage_list(list_id):
                 insights.append(trans('shopping_insight_under_budget', default='You are under budget. Consider allocating funds to savings.'))
 
         return render_template(
-            'personal/SHOPPING/manage_list.html',
+            'manage_list.html',
             list_form=ShoppingListForm(data={'name': selected_list['name'], 'budget': selected_list['budget_raw']}),
             item_form=ShoppingItemsForm(),
             share_form=ShareListForm(),
@@ -1043,7 +1043,7 @@ def manage_list(list_id):
     except Exception as e:
         logger.error(f"Error managing list {list_id}: {str(e)}")
         flash(trans('shopping_list_error', default='Error loading list.'), 'danger')
-        return redirect(url_for('personal.shopping.main', tab='manage-list'))
+        return redirect(url_for('shopping.main', tab='manage-list'))
 
 @shopping_bp.route('/lists/<list_id>/export_pdf', methods=['GET'])
 @login_required
@@ -1053,14 +1053,14 @@ def export_list_pdf(list_id):
     try:
         if not ObjectId.is_valid(list_id):
             flash(trans('shopping_invalid_list_id', default='Invalid list ID.'), 'danger')
-            return redirect(url_for('personal.shopping.main', tab='view-lists'))
+            return redirect(url_for('shopping.main', tab='view-lists'))
         shopping_list = db.shopping_lists.find_one({'_id': ObjectId(list_id), 'user_id': str(current_user.id)})
         if not shopping_list:
             flash(trans('shopping_list_not_found', default='List not found.'), 'danger')
-            return redirect(url_for('personal.shopping.main', tab='view-lists'))
+            return redirect(url_for('shopping.main', tab='view-lists'))
         if shopping_list.get('status') != 'saved':
             flash(trans('shopping_list_not_saved', default='List must be saved before exporting.'), 'danger')
-            return redirect(url_for('personal.shopping.main', tab='view-lists'))
+            return redirect(url_for('shopping.main', tab='view-lists'))
         if current_user.is_authenticated and not is_admin():
             if not check_ficore_credit_balance(required_amount=2, user_id=current_user.id):
                 flash(trans('shopping_insufficient_credits', default='Insufficient credits to export PDF.'), 'danger')
@@ -1177,18 +1177,18 @@ def export_list_pdf(list_id):
                 if current_user.is_authenticated and not is_admin():
                     if not deduct_ficore_credits(db, current_user.id, 2, 'export_shopping_list_pdf', list_id, mongo_session):
                         flash(trans('shopping_credit_deduction_failed', default='Failed to deduct credits for PDF export.'), 'danger')
-                        return redirect(url_for('personal.shopping.main', tab='view-lists'))
+                        return redirect(url_for('shopping.main', tab='view-lists'))
         return Response(buffer, mimetype='application/pdf', headers={'Content-Disposition': f'attachment;filename=shopping_list_{list_id}.pdf'})
     except Exception as e:
         logger.error(f"Error exporting PDF for list {list_id}: {str(e)}")
         flash(trans('shopping_export_error', default='Error exporting to PDF.'), 'danger')
-        return redirect(url_for('personal.shopping.main', tab='view-lists'))
+        return redirect(url_for('shopping.main', tab='view-lists'))
 
 @shopping_bp.errorhandler(CSRFError)
 def handle_csrf_error(e):
     logger.error(f"CSRF error on {request.path}: {e.description}")
     flash(trans('shopping_csrf_error', default='Form submission failed. Please refresh and try again.'), 'danger')
-    return redirect(url_for('personal.shopping.main', tab='create-list')), 404
+    return redirect(url_for('shopping.main', tab='create-list')), 404
 
 def init_app(app):
     try:
