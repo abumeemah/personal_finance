@@ -21,7 +21,6 @@ import utils
 from mailersend_email import init_email_config
 from scheduler_setup import init_scheduler
 from models import create_user, get_user_by_email, initialize_app_data
-from tax_models import initialize_tax_data
 from credits.routes import credits_bp
 from dashboard.routes import dashboard_bp
 from users.routes import users_bp
@@ -238,9 +237,9 @@ def create_app():
     @ensure_session_id
     def index():
         if current_user.is_authenticated:
-            elif current_user.role == 'admin':
+            if current_user.role == 'admin':
                 return redirect(url_for('dashboard.index'))
-            return redirect(url_for('home'))  # Updated to reference bill_bp directly
+            return redirect(url_for('bill_bp.home'))
         return redirect(url_for('general_bp.landing'))
 
     @app.route('/change-language', methods=['POST'])
@@ -276,7 +275,7 @@ def create_app():
     @app.errorhandler(404)
     def page_not_found(e):
         return render_template(
-            'general/404.html',  # Updated path to reflect general blueprint
+            'general/404.html',
             error=str(e),
             title=utils.trans('not_found', lang=session.get('lang', 'en'))
         ), 404
