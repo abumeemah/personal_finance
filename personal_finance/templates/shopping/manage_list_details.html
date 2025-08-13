@@ -1,0 +1,129 @@
+<div class="row mb-3">
+    <div class="col-md-6">
+        <h5>{{ t('shopping_list_details', default='List Details') | e }}: {{ selected_list.name | e }}</h5>
+        <p><strong>{{ t('general_created', default='Created') | e }}:</strong> {{ format_datetime(selected_list.created_at) | e }}</p>
+        <p><strong>{{ t('general_budget', default='Budget') | e }}:</strong> <span id="budget-display">{{ selected_list.budget | e }}</span></p>
+        <p><strong>{{ t('general_total_spent', default='Total Spent') | e }}:</strong> <span id="total-spent">{{ selected_list.total_spent | e }}</span></p>
+        <p><strong>{{ t('general_remaining', default='Remaining') | e }}:</strong> <span id="remaining-budget">{{ format_currency(selected_list.budget_raw - selected_list.total_spent_raw) | e }}</span></p>
+        <p><strong>{{ t('general_status', default='Status') | e }}:</strong> {{ t(selected_list.status, default=selected_list.status) | e }}</p>
+        <p><strong>{{ t('general_collaborators', default='Collaborators') | e }}:</strong> {{ selected_list.collaborators | join(', ') | e or t('general_none', default='None') | e }}</p>
+    </div>
+    <div class="col-md-6">
+        <form method="POST" action="{{ url_for('personal.shopping.manage_list', list_id=selected_list.id) | e }}" id="updateListForm" class="validate-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() | e }}">
+            <input type="hidden" name="action" value="save_list_changes">
+            <div class="mb-3">
+                <label for="list_name" class="form-label">{{ t('shopping_list_name', default='List Name') | e }}</label>
+                <input type="text" name="list_name" id="list_name" class="form-control" value="{{ selected_list.name | e }}" required>
+                <div class="invalid-feedback">{{ t('shopping_list_name_invalid', default='Please enter a valid list name') | e }}</div>
+            </div>
+            <div class="mb-3">
+                <label for="list_budget" class="form-label">{{ t('shopping_budget', default='Budget') | e }}</label>
+                <input type="text" name="list_budget" id="list_budget" class="form-control number-input" data-allow-commas="true" value="{{ selected_list.budget_raw | e }}" required>
+                <div class="invalid-feedback">{{ t('shopping_budget_required', default='Budget is required') | e }}</div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                {{ t('shopping_save_changes', default='Save Changes') | e }}
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h5>{{ t('shopping_items', default='Items') | e }}</h5>
+        {% if items %}
+            <table class="table table-striped" id="items-table">
+                <thead>
+                    <tr>
+                        <th>{{ t('general_item_name', default='Item Name') | e }}</th>
+                        <th>{{ t('general_quantity', default='Quantity') | e }}</th>
+                        <th>{{ t('general_price', default='Price') | e }}</th>
+                        <th>{{ t('general_unit', default='Unit') | e }}</th>
+                        <th>{{ t('general_category', default='Category') | e }}</th>
+                        <th>{{ t('general_status', default='Status') | e }}</th>
+                        <th>{{ t('general_store', default='Store') | e }}</th>
+                        <th>{{ t('general_frequency', default='Frequency') | e }}</th>
+                        <th>{{ t('general_actions', default='Actions') | e }}</th>
+                    </tr>
+                </thead>
+                <tbody id="items-table-body">
+                    {% for item in items %}
+                        <tr data-item-id="{{ item.id | e }}">
+                            <td>{{ item.name | e }}</td>
+                            <td>{{ item.quantity | e }}</td>
+                            <td><span class="formatted-price">{{ format_currency(item.price) | e }}</span></td>
+                            <td>{{ t(item.unit, default=item.unit) | e }}</td>
+                            <td>{{ t(item.category, default=item.category) | e }}</td>
+                            <td>{{ t(item.status, default=item.status) | e }}</td>
+                            <td>{{ item.store | e }}</td>
+                            <td>{{ item.frequency | e }} {{ t('general_days', default='days') | e }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-item" data-bs-toggle="modal" data-bs-target="#editItemModal"
+                                    data-id="{{ item.id | e }}"
+                                    data-name="{{ item.name | e }}"
+                                    data-quantity="{{ item.quantity | e }}"
+                                    data-price="{{ item.price_raw | e }}"
+                                    data-unit="{{ item.unit | e }}"
+                                    data-category="{{ item.category | e }}"
+                                    data-status="{{ item.status | e }}"
+                                    data-store="{{ item.store | e }}"
+                                    data-frequency="{{ item.frequency | e }}"
+                                    onclick="openEditModal('{{ item.id | e }}', '{{ item.name | e }}', {{ item.quantity | e }}, '{{ item.price_raw | e }}', '{{ item.unit | e }}', '{{ item.category | e }}', '{{ item.status | e }}', '{{ item.store | e }}', {{ item.frequency | e }})">
+                                    {{ t('general_edit', default='Edit') | e }}
+                                </button>
+                                <form method="POST" action="{{ url_for('personal.shopping.manage_list', list_id=selected_list.id) | e }}" style="display:inline;" class="delete-item-form">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() | e }}">
+                                    <input type="hidden" name="action" value="delete_item">
+                                    <input type="hidden" name="item_id" value="{{ item.id | e }}">
+                                    <button type="submit" class="btn btn-sm btn-danger">{{ t('general_delete', default='Delete') | e }}</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state text-center">
+                <i class="fa-solid fa-cart-shopping fa-3x mb-3"></i>
+                <p>{{ t('shopping_no_items', default='No items in this list. Add items to get started.') | e }}</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <h5>{{ t('shopping_add_new_item', default='Add New Item') | e }}</h5>
+        <form method="POST" action="{{ url_for('personal.shopping.manage_list', list_id=selected_list.id) | e }}" id="addItemsForm" class="validate-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() | e }}">
+            <input type="hidden" name="action" value="add_items">
+            <div id="new-items-container">
+                <!-- New items will be dynamically added here -->
+            </div>
+            <button type="button" id="addNewItemRow" class="btn btn-outline-primary mt-2">
+                <i class="fa-solid fa-plus"></i> {{ t('shopping_add_item', default='Add Item') | e }}
+            </button>
+            <button type="submit" class="btn btn-primary mt-2">
+                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                {{ t('shopping_save_items', default='Save Items') | e }}
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <form method="POST" action="{{ url_for('personal.shopping.manage_list', list_id=selected_list.id) | e }}" id="saveListForm" class="validate-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() | e }}">
+            <input type="hidden" name="action" value="save_list_changes">
+            <input type="hidden" name="save_list" value="true">
+            <button type="submit" class="btn btn-success">
+                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                {{ t('shopping_save_list', default='Save List') | e }}
+            </button>
+            <a href="{{ url_for('personal.shopping.export_list_pdf', list_id=selected_list.id) | e }}" class="btn btn-info">{{ t('shopping_export_pdf', default='Export to PDF') | e }}</a>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ t('admin_audit_logs', default='Audit Logs') }} - FiCore{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">{{ t('admin_audit_logs', default='Audit Logs') }}</h1>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary mb-4">{{ t('general_back_to_dashboard', default='Back to Dashboard') }}</a>
+    {% if logs %}
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>{{ t('general_timestamp', default='Timestamp') }}</th>
+                        <th>{{ t('admin_admin_id', default='Admin ID') }}</th>
+                        <th>{{ t('general_action', default='Action') }}</th>
+                        <th>{{ t('general_details', default='Details') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                        <tr>
+                            <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>{{ log.admin_id }}</td>
+                            <td>{{ t(log.action, default=log.action) }}</td>
+                            <td>{{ log.details }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <p class="text-muted">{{ t('admin_no_audit_logs', default='No audit logs found') }}</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

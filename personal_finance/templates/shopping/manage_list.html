@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ t('shopping_title', default='Shopping List Manager') | e }}
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/shopping.css') | e }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% set tool_name = 'shopping_title' %}
+    {% set tool_icon = 'fa-cart-shopping' %}
+    {% set subtitle = t('shopping_subtitle', default='Organize and manage your shopping lists efficiently') | e %}
+    {% include 'personal/GENERAL/tool_header.html' %}
+
+    <!-- Toast Container -->
+    <div class="toast-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="toast align-items-center text-white bg-{{ 'success' if category == 'success' else 'danger' if category == 'error' else 'warning' }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            {{ t(message, default=message) | e }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="{{ t('general_close', default='Close') | e }}"></button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endwith %}
+    </div>
+
+    <!-- Budget Exceeded Modal -->
+    <div class="modal fade" id="budgetWarningModal" tabindex="-1" aria-labelledby="budgetWarningModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="budgetWarningModalLabel">{{ t('shopping_budget_warning', default='Budget Exceeded') | e }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('general_close', default='Close') | e }}"></button>
+                </div>
+                <div class="modal-body">
+                    {{ t('shopping_budget_exceeded', default='Your total spending exceeds the budget. Please review your items.') | e }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('general_close', default='Close') | e }}</button>
+                    <button type="button" class="btn btn-primary" id="proceedSubmit">{{ t('shopping_proceed_anyway', default='Proceed Anyway') | e }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Item Modal -->
+    <div class="modal fade edit-modal" id="editItemModal" tabindex="-1" aria-labelledby="editItemModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editItemModalLabel">{{ t('shopping_edit_item', default='Edit Item') | e }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('general_close', default='Close') | e }}"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-item-id">
+                    <div class="mb-3">
+                        <label for="edit-item-name" class="form-label">{{ t('general_item_name', default='Item Name') | e }}</label>
+                        <input type="text" id="edit-item-name" class="form-control" required>
+                        <div class="invalid-feedback">{{ t('shopping_item_name_invalid', default='Please enter a valid item name') | e }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-item-quantity" class="form-label">{{ t('general_quantity', default='Quantity') | e }}</label>
+                        <input type="number" id="edit-item-quantity" class="form-control number-input" min="1" max="1000" required>
+                        <small class="form-text text-muted">{{ t('shopping_quantity_help', default='Enter the number of units (e.g., 2 cartons, 5 pieces)') | e }}</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-item-price" class="form-label">{{ t('general_price', default='Price') | e }}</label>
+                        <input type="text" id="edit-item-price" class="form-control number-input" data-allow-commas="true" required>
+                        <small class="form-text text-muted">{{ t('shopping_price_help', default='Enter price per unit (e.g., price for one carton or piece)') | e }}</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-item-unit" class="form-label">{{ t('general_unit', default='Unit') | e }}</label>
+                        <select id="edit-item-unit" class="form-control">
+                            {% for value, label in item_form.unit.choices %}
+                                <option value="{{ value | e }}">{{ t(value, default=label) | e }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-item-category" class="form-label">{{ t('general_category', default='Category') | e }}</label>
+                        <select id="edit-item-category" class="form-control">
+                            {% for value, label in item_form.category.choices %}
+                                <option value="{{ value | e }}">{{ t(value, default=label) | e }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-item-status" class="form-label">{{ t('general_status', default='Status') | e }}</label>
+                        <select id="edit-item-status" class="form-control">
+                            {% for value, label in item_form.status.choices %}
+                                <option value="{{ value | e }}">{{ t(value, default=label) | e }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-item-store" class="form-label">{{ t('general_store', default='Store') | e }}</label>
+                        <input type="text" id="edit-item-store" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-item-frequency" class="form-label">{{ t('general_frequency', default='Frequency') | e }}</label>
+                        <input type="number" id="edit-item-frequency" class="form-control number-input" min="1" max="365">
+                        <small class="form-text text-muted">{{ t('shopping_frequency_help', default='Enter frequency in days (e.g., 7)') | e }}</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('general_cancel', default='Cancel') | e }}</button>
+                    <button type="button" class="btn btn-primary" id="saveEditItem">{{ t('shopping_save_changes', default='Save Changes') | e }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duplicate Item Warning -->
+    <div id="duplicateWarning" class="alert alert-warning alert-dismissible fade d-none" role="alert">
+        {{ t('shopping_duplicate_item', default='Duplicate item name detected. Please use unique item names.') | e }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ t('general_close', default='Close') | e }}"></button>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="shoppingTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" href="{{ url_for('personal.shopping.main', tab='create-list') | e }}">
+                <i class="fa-solid fa-plus"></i> {{ t('shopping_create_list', default='Create List') | e }}
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" href="{{ url_for('personal.shopping.main', tab='add-items') | e }}">
+                <i class="fa-solid fa-cart-plus"></i> {{ t('shopping_add_items', default='Add Items') | e }}
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" href="{{ url_for('personal.shopping.main', tab='view-lists') | e }}">
+                <i class="fa-solid fa-list"></i> {{ t('shopping_view_lists', default='View Lists') | e }}
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="manage-list-tab" data-bs-toggle="tab" data-bs-target="#manage-list" type="button" role="tab" aria-controls="manage-list" aria-selected="true">
+                <i class="fa-solid fa-list-check"></i> {{ t('shopping_manage_list', default='Manage List') | e }}
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="shoppingTabContent">
+        <div class="tab-pane fade show active" id="manage-list" role="tabpanel" aria-labelledby="manage-list-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fa-solid fa-list-check"></i> {{ t('shopping_manage_list', default='Manage Shopping List') | e }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if lists %}
+                        <div class="mb-3">
+                            <label for="manage-list-select" class="form-label">{{ t('shopping_select_list', default='Select a Shopping List') | e }}</label>
+                            <select id="manage-list-select" class="form-select" onchange="loadListDetails(this.value, 'manage-list')">
+                                <option value="">{{ t('general_select', default='Select a list') | e }}</option>
+                                {% for list_id, lst in lists.items() %}
+                                    {% if lst.status != 'saved' %}
+                                        <option value="{{ lst.id | e }}" {{ 'selected' if selected_list_id == lst.id else '' }}>{{ lst.name | e }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div id="manage-list-details">
+                            {% if selected_list and selected_list.id %}
+                                {% include 'personal/SHOPPING/manage_list_details.html' %}
+                            {% else %}
+                                <div class="empty-state text-center">
+                                    <i class="fa-solid fa-cart-shopping fa-3x mb-3"></i>
+                                    <p>{{ t('shopping_no_list_selected', default='No active list selected. Please select an active list to manage.') | e }}</p>
+                                    <a href="{{ url_for('personal.shopping.main', tab='create-list') | e }}" class="btn btn-primary">
+                                        <i class="fa-solid fa-plus"></i> {{ t('shopping_create_list', default='Create List') | e }}
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div id="manage-list-details" class="empty-state text-center">
+                            <i class="fa-solid fa-cart-shopping fa-3x mb-3"></i>
+                            <p>{{ t('shopping_no_lists', default='No active lists found. Create one to get started.') | e }}</p>
+                            <a href="{{ url_for('personal.shopping.main', tab='create-list') | e }}" class="btn btn-primary">
+                                <i class="fa-solid fa-plus"></i> {{ t('shopping_create_list', default='Create List') | e }}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    window.SHOPPING_GET_LIST_DETAILS_URL = "{{ url_for('personal.shopping.get_list_details') | e }}";
+    window.CSRF_TOKEN = "{{ csrf_token() | e }}";
+</script>
+<script defer src="{{ url_for('static', filename='js/shopping.js') | e }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let itemIndex = 1;
+    document.getElementById('addNewItemRow')?.addEventListener('click', function() {
+        const container = document.getElementById('new-items-container');
+        const newRow = document.createElement('div');
+        newRow.className = 'row new-item-row';
+        newRow.innerHTML = `
+            <div class="col-md-3 mb-3">
+                <input type="text" name="new_items[${itemIndex}][name]" class="form-control new-item-name" placeholder="{{ t('shopping_item_name_placeholder', default='e.g., Milk') | e }}" required>
+                <div class="invalid-feedback">{{ t('shopping_item_name_invalid', default='Please enter a valid item name') | e }}</div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <input type="number" name="new_items[${itemIndex}][quantity]" class="form-control new-item-quantity number-input" placeholder="{{ t('shopping_quantity_placeholder', default='e.g., 2') | e }}" min="1" max="1000" value="1" required>
+                <small class="form-text text-muted">{{ t('shopping_quantity_help', default='Enter the number of units (e.g., 2 cartons, 5 pieces)') | e }}</small>
+            </div>
+            <div class="col-md-2 mb-3">
+                <input type="text" name="new_items[${itemIndex}][price]" class="form-control new-item-price number-input" data-allow-commas="true" placeholder="{{ t('shopping_price_placeholder', default='e.g., 500.00') | e }}" value="0.00" required>
+                <small class="form-text text-muted">{{ t('shopping_price_help', default='Enter price per unit (e.g., price for one carton or piece)') | e }}</small>
+            </div>
+            <div class="col-md-2 mb-3">
+                <select name="new_items[${itemIndex}][unit]" class="form-control">
+                    {% for value, label in item_form.unit.choices %}
+                        <option value="{{ value | e }}">{{ t(value, default=label) | e }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <select name="new_items[${itemIndex}][category]" class="form-control">
+                    {% for value, label in item_form.category.choices %}
+                        <option value="{{ value | e }}">{{ t(value, default=label) | e }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        `;
+        container.appendChild(newRow);
+        itemIndex++;
+    });
+
+    document.querySelectorAll('.toast').forEach(toast => {
+        new bootstrap.Toast(toast).show();
+    });
+
+    const select = document.getElementById('manage-list-select');
+    if (select && select.value) {
+        loadListDetails(select.value, 'manage-list');
+    }
+
+    // Ensure items-table-body exists
+    if (!document.getElementById('items-table-body')) {
+        console.warn('items-table-body element not found. Initializing empty tbody.');
+        const table = document.getElementById('items-table');
+        if (table) {
+            const tbody = document.createElement('tbody');
+            tbody.id = 'items-table-body';
+            table.appendChild(tbody);
+        }
+    }
+
+    // Clean comma-separated inputs on blur
+    document.querySelectorAll('input[data-allow-commas="true"]').forEach(input => {
+        input.addEventListener('blur', function() {
+            let value = this.value.replace(/,/g, '');
+            if (!isNaN(parseFloat(value)) && isFinite(value)) {
+                this.value = parseFloat(value).toFixed(2);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

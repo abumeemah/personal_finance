@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ t('credits_manage_request_title', default='Manage Credit Request') }} - FiCore{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="page-title">
+        <h1>{{ t('credits_manage_request_title', default='Manage Credit Request') }}</h1>
+        <small class="subtext">{{ t('credits_wallet_subtext', default='Tsabobin Cikin App') }}</small>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <p>{{ t('general_user_id', default='User ID') }}: {{ request.user_id }}</p>
+            <p>{{ t('general_amount', default='Amount') }}: {{ request.amount }} {{ t('credits_fcs', default='Ficore Credits') }}</p>
+            <p>{{ t('general_payment_method', default='Payment Method') }}: {{ request.payment_method }}</p>
+            <p>{{ t('credits_receipt', default='Receipt') }}: 
+                {% if request.receipt_file_id %}
+                    <a href="{{ url_for('credits.view_receipt', file_id=request.receipt_file_id) }}">{{ t('credits_view_receipt', default='View Receipt') }}</a>
+                {% else %}
+                    {{ t('credits_no_receipt', default='No Receipt') }}
+                {% endif %}
+            </p>
+            <form action="{{ url_for('admin.manage_credit_request', request_id=request._id) }}" method="POST" class="row g-3">
+                {{ form.hidden_tag() }}
+                <div class="col-12">
+                    <label for="status" class="form-label">{{ t('credits_request_status', default='Request Status') }}</label>
+                    {{ form.status(class="form-control", required=True) }}
+                    {% if form.status.errors %}
+                        <p class="text-danger mt-1">{{ form.status.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary w-100">{{ t('credits_update_status', default='Update Request Status') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

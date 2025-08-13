@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>{{ trans('feedback_user_id', default='User ID') }}</th>
+            <th>{{ trans('feedback_tool_name', default='Tool Name') }}</th>
+            <th>{{ trans('feedback_rating', default='Rating') }}</th>
+            <th>{{ trans('feedback_comment', default='Comment') }}</th>
+            <th>{{ trans('feedback_timestamp', default='Timestamp') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for feedback in feedbacks %}
+        <tr>
+            <td>{{ feedback.user_id or 'Anonymous' }}</td>
+            <td>{{ feedback.tool_name }}</td>
+            <td>{{ feedback.rating }}</td>
+            <td>{{ feedback.comment or '' }}</td>
+            <td>{{ feedback.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5">No feedback available.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

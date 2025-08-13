@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}
+{{ t('admin_manage_bills', default='Manage Bills') | escape }} - FiCore
+{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1>{{ t('admin_manage_bills', default='Manage Bills') | escape }}</h1>
+    {% if bills %}
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>{{ t('general_user', default='User') | escape }}</th>
+                        <th>{{ t('bills_name', default='Bill Name') | escape }}</th>
+                        <th>{{ t('bills_amount_due', default='Amount Due') | escape }}</th>
+                        <th>{{ t('bills_due_date', default='Due Date') | escape }}</th>
+                        <th>{{ t('bills_status', default='Status') | escape }}</th>
+                        <th>{{ t('general_created_at', default='Created At') | escape }}</th>
+                        <th>{{ t('general_actions', default='Actions') | escape }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bill in bills %}
+                        <tr>
+                            <td>{{ bill.user_id | escape }}</td>
+                            <td>{{ bill.name | escape }}</td>
+                            <td>{{ bill.amount_due | format_currency | escape }}</td>
+                            <td>{{ bill.due_date | format_date | escape }}</td>
+                            <td>{{ t('bills_' + bill.status, default=bill.status.capitalize()) | escape }}</td>
+                            <td>{{ bill.created_at | format_date | escape }}</td>
+                            <td>
+                                <form action="{{ url_for('admin.admin_delete_bill', bill_id=bill._id) }}" method="post" style="display:inline;">
+                                    <button class="btn btn-danger btn-sm" onclick="return confirm('{{ t('admin_confirm_delete', default='Are you sure you want to delete this bill?') | escape }}')">
+                                        {{ t('general_delete', default='Delete') | escape }}
+                                    </button>
+                                </form>
+                                {% if bill.status != 'paid' %}
+                                    <form action="{{ url_for('admin.admin_mark_bill_paid', bill_id=bill._id) }}" method="post" style="display:inline;">
+                                        <button class="btn btn-success btn-sm" onclick="return confirm('{{ t('admin_confirm_mark_paid', default='Mark this bill as paid?') | escape }}')">
+                                            {{ t('bills_mark_paid', default='Mark Paid') | escape }}
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">{{ t('admin_no_bills', default='No bills found') | escape }}</p>
+    {% endif %}
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary mt-3">{{ t('general_back_to_dashboard', default='Back to Dashboard') | escape }}</a>
+</div>
+{% endblock %}

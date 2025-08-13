@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}
+{{ t('admin_manage_budgets', default='Manage Budgets') | escape }} - FiCore
+{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1>{{ t('admin_manage_budgets', default='Manage Budgets') | escape }}</h1>
+    {% if budgets %}
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>{{ t('general_user', default='User') | escape }}</th>
+                        <th>{{ t('budgets_income', default='Income') | escape }}</th>
+                        <th>{{ t('budgets_expenses', default='Expenses') | escape }}</th>
+                        <th>{{ t('budgets_surplus_deficit', default='Surplus/Deficit') | escape }}</th>
+                        <th>{{ t('general_created_at', default='Created At') | escape }}</th>
+                        <th>{{ t('general_actions', default='Actions') | escape }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for budget in budgets %}
+                        <tr>
+                            <td>{{ budget.user_id | escape }}</td>
+                            <td>{{ budget.income | format_currency | escape }}</td>
+                            <td>{{ budget.fixed_expenses | format_currency | escape }}</td>
+                            <td>{{ budget.surplus_deficit | format_currency | escape }}</td>
+                            <td>{{ budget.created_at | format_date | escape }}</td>
+                            <td>
+                                <form action="{{ url_for('admin.admin_delete_budget', budget_id=budget._id) }}" method="post" style="display:inline;">
+                                    <button class="btn btn-danger btn-sm" onclick="return confirm('{{ t('admin_confirm_delete', default='Are you sure you want to delete this budget?') | escape }}')">
+                                        {{ t('general_delete', default='Delete') | escape }}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted">{{ t('admin_no_budgets', default='No budgets found') | escape }}</p>
+    {% endif %}
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary mt-3">{{ t('general_back_to_dashboard', default='Back to Dashboard') | escape }}</a>
+</div>
+{% endblock %}
