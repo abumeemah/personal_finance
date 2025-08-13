@@ -87,10 +87,6 @@ def index():
 
         return render_template(
             'dashboard/index.html',
-            recent_creditors=recent_creditors,
-            recent_debtors=recent_debtors,
-            recent_payments=recent_payments,
-            recent_receipts=recent_receipts,
             personal_finance_summary=personal_finance_summary
         )
     except Exception as e:
