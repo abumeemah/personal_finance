@@ -73,15 +73,6 @@ class SignupForm(FlaskForm):
         validators.Length(min=6, message=trans('general_password_length', default='Password must be at least 6 characters')),
         validators.Regexp(PASSWORD_REGEX, message=trans('general_password_format', default='Password must be at least 6 characters'))
     ], render_kw={'class': 'form-control'})
-    role = SelectField(trans('general_role', default='Role'), choices=[
-        ('personal', trans('general_personal', default='Personal')),
-        ('trader', trans('general_trader', default='Trader')),
-        ('agent', trans('general_agent', default='Agent'))
-    ], validators=[validators.DataRequired(message=trans('general_role_required', default='Role is required'))], render_kw={'class': 'form-select'})
-    agent_id = StringField(trans('agents_agent_id', default='Agent ID'), [
-        validators.Optional(),
-        validators.Regexp(AGENT_ID_REGEX, message=trans('agents_agent_id_format', default='Agent ID must be 8 alphanumeric characters'))
-    ], render_kw={'class': 'form-control'})
     language = SelectField(trans('general_language', default='Language'), choices=[
         ('en', trans('general_english', default='English')),
         ('ha', trans('general_hausa', default='Hausa'))
@@ -106,47 +97,6 @@ class ResetPasswordForm(FlaskForm):
         validators.EqualTo('password', message=trans('general_passwords_must_match', default='Passwords must match'))
     ], render_kw={'class': 'form-control'})
     submit = SubmitField(trans('general_reset_password', default='Reset Password'), render_kw={'class': 'btn btn-primary w-100'})
-
-class BusinessSetupForm(FlaskForm):
-    business_name = StringField(trans('general_business_name', default='Business Name'),
-                               validators=[validators.DataRequired(message=trans('general_business_name_required', default='Business name is required')),
-                                           validators.Length(min=1, max=255)],
-                               render_kw={'class': 'form-control'})
-    address = TextAreaField(trans('general_address', default='Address'),
-                            validators=[validators.DataRequired(message=trans('general_address_required', default='Address is required')),
-                                        validators.Length(max=500)],
-                            render_kw={'class': 'form-control'})
-    industry = SelectField(trans('general_industry', default='Industry'),
-                          choices=[
-                              ('retail', trans('general_retail', default='Retail')),
-                              ('services', trans('general_services', default='Services')),
-                              ('manufacturing', trans('general_manufacturing', default='Manufacturing')),
-                              ('other', trans('general_other', default='Other'))
-                          ],
-                          validators=[validators.DataRequired(message=trans('general_industry_required', default='Industry is required'))],
-                          render_kw={'class': 'form-control'})
-    products_services = TextAreaField(trans('general_products_services', default='Products/Services'),
-                                     validators=[validators.DataRequired(message=trans('general_products_services_required', default='Products/Services is required')),
-                                                 validators.Length(max=500)],
-                                     render_kw={'class': 'form-control'})
-    phone_number = StringField(trans('general_phone_number', default='Phone Number'),
-                              validators=[
-                                  validators.DataRequired(message=trans('general_phone_number_required', default='Phone number is required')),
-                                  validators.Regexp(PHONE_REGEX, message=trans('general_phone_number_format', default='Phone number must be 10-15 digits'))
-                              ],
-                              render_kw={'class': 'form-control'})
-    language = SelectField(trans('general_language', default='Language'),
-                          choices=[
-                              ('en', trans('general_english', default='English')),
-                              ('ha', trans('general_hausa', default='Hausa'))
-                          ],
-                          validators=[validators.DataRequired(message=trans('general_language_required', default='Language is required'))],
-                          render_kw={'class': 'form-select'})
-    terms = BooleanField(trans('general_terms', default='I accept the Terms and Conditions'),
-                        validators=[validators.DataRequired(message=trans('general_terms_required', default='You must accept the terms'))],
-                        render_kw={'class': 'form-check-input'})
-    submit = SubmitField(trans('general_save_and_continue', default='Save and Continue'), render_kw={'class': 'btn btn-primary w-100'})
-    back = SubmitField(trans('general_back', default='Back'), render_kw={'class': 'btn btn-secondary w-100 mt-2'})
 
 class PersonalSetupForm(FlaskForm):
     first_name = StringField(trans('general_first_name', default='First Name'),
@@ -180,54 +130,6 @@ class PersonalSetupForm(FlaskForm):
     submit = SubmitField(trans('general_save_and_continue', default='Save and Continue'), render_kw={'class': 'btn btn-primary w-100'})
     back = SubmitField(trans('general_back', default='Back'), render_kw={'class': 'btn btn-secondary w-100 mt-2'})
 
-class AgentSetupForm(FlaskForm):
-    agent_name = StringField(trans('agents_agent_name', default='Agent Name'),
-                            validators=[validators.DataRequired(message=trans('agents_agent_name_required', default='Agent name is required')),
-                                        validators.Length(min=1, max=255)],
-                            render_kw={'class': 'form-control'})
-    agent_id = StringField(trans('agents_agent_id', default='Agent ID'),
-                          validators=[validators.DataRequired(message=trans('agents_agent_id_required', default='Agent ID is required')),
-                                      validators.Length(min=1, max=50)],
-                          render_kw={'class': 'form-control'})
-    area = StringField(trans('agents_area', default='Geographic Area'),
-                      validators=[validators.DataRequired(message=trans('agents_area_required', default='Geographic area is required')),
-                                  validators.Length(max=255)],
-                      render_kw={'class': 'form-control'})
-    role = SelectField(trans('agents_role', default='Primary Role'),
-                      choices=[
-                          ('user_onboarding', trans('agents_user_onboarding', default='User Onboarding')),
-                          ('financial_literacy', trans('agents_financial_literacy', default='Financial Literacy Educator')),
-                          ('technical_support', trans('agents_technical_support', default='Technical Support')),
-                          ('cash_point', trans('agents_cash_point', default='Cash-In/Cash-Out Point'))
-                      ],
-                      validators=[validators.DataRequired(message=trans('agents_role_required', default='Role is required'))],
-                      render_kw={'class': 'form-select'})
-    email = StringField(trans('general_email', default='Email'),
-                       validators=[
-                           validators.DataRequired(message=trans('general_email_required', default='Email is required')),
-                           validators.Email(message=trans('general_email_invalid', default='Invalid email address')),
-                           validators.Length(max=254),
-                           lambda form, field: utils.is_valid_email(field.data) or validators.ValidationError(trans('general_email_domain_invalid', default='Invalid email domain'))
-                       ],
-                       render_kw={'class': 'form-control'})
-    phone = StringField(trans('general_phone', default='Phone Number'),
-                       validators=[
-                           validators.DataRequired(message=trans('general_phone_required', default='Phone number is required')),
-                           validators.Regexp(PHONE_REGEX, message=trans('general_phone_format', default='Phone number must be 10-15 digits'))
-                       ],
-                       render_kw={'class': 'form-control'})
-    language = SelectField(trans('general_language', default='Language'),
-                          choices=[
-                              ('en', trans('general_english', default='English')),
-                              ('ha', trans('general_hausa', default='Hausa'))
-                          ],
-                          validators=[validators.DataRequired(message=trans('general_language_required', default='Language is required'))],
-                          render_kw={'class': 'form-select'})
-    terms = BooleanField(trans('general_terms', default='I accept the Terms and Conditions'),
-                        validators=[validators.DataRequired(message=trans('general_terms_required', default='You must accept the terms'))],
-                        render_kw={'class': 'form-check-input'})
-    submit = SubmitField(trans('general_save_and_continue', default='Save and Continue'), render_kw={'class': 'btn btn-primary w-100'})
-    back = SubmitField(trans('general_back', default='Back'), render_kw={'class': 'btn btn-secondary w-100 mt-2'})
 
 def log_audit_action(action, details=None):
     try:
@@ -243,76 +145,36 @@ def log_audit_action(action, details=None):
     except Exception as e:
         logger.error(f"Unexpected error logging audit action '{action}': {str(e)}")
 
-def validate_agent_id(agent_id):
-    """Validate agent ID against the agents collection."""
-    try:
-        db = utils.get_mongo_db()
-        agent = db.agents.find_one({'_id': agent_id, 'status': 'active'})
-        if not agent:
-            return False
-        # Check if agent_id is already associated with a user
-        user = db.users.find_one({'agent_details.agent_id': agent_id})
-        if user:
-            return False
-        return True
-    except errors.PyMongoError as e:
-        logger.error(f"Error validating agent ID {agent_id}: {str(e)}")
-        return False
-    except Exception as e:
-        logger.error(f"Unexpected error validating agent ID {agent_id}: {str(e)}")
-        return False
 
 def get_setup_wizard_route(role):
     """Get the appropriate setup wizard route based on user role."""
     try:
         if role == 'personal':
             return 'users.personal_setup_wizard'
-        elif role == 'trader':
-            return 'users.setup_wizard'
-        elif role == 'agent':
-            return 'users.agent_setup_wizard'
-        else:
-            logger.warning(f"Unknown role '{role}' for setup wizard route, defaulting to trader")
-            return 'users.setup_wizard'
-    except Exception as e:
-        logger.error(f"Error determining setup wizard route for role '{role}': {str(e)}")
-        return 'users.setup_wizard'
 
 def get_post_login_redirect(user_role):
     """Determine where to redirect user after login based on their role."""
     try:
         if user_role == 'personal':
             return url_for('personal.index')
-        elif user_role == 'trader':
-            return url_for('general_bp.home')
-        elif user_role == 'agent':
-            return url_for('agents_bp.agent_portal')
-        elif user_role == 'admin':
-            return url_for('admin.dashboard')
         else:
-            logger.warning(f"Unknown role '{user_role}' for login redirect, defaulting to personal.index")
+            logger.warning(f"Unknown role '{user_role}' for login redirect, defaulting to home")
             return url_for('personal.index')
     except Exception as e:
         logger.error(f"Error determining login redirect for role '{user_role}': {str(e)}")
-        return url_for('personal.index')
+        return url_for('home')
 
 def get_explore_tools_redirect(user_role):
     """Determine where to redirect user when they click 'Explore Your Tools' based on their role."""
     try:
         if user_role == 'personal':
             return url_for('dashboard.index')
-        elif user_role == 'trader':
-            return url_for('general_bp.home')
-        elif user_role == 'agent':
-            return url_for('agents_bp.agent_portal')
-        elif user_role == 'admin':
-            return url_for('admin.dashboard')
         else:
             logger.warning(f"Unknown role '{user_role}' for explore tools redirect, defaulting to personal.index")
-            return url_for('personal.index')
+            return url_for('home')
     except Exception as e:
         logger.error(f"Error determining explore tools redirect for role '{user_role}': {str(e)}")
-        return url_for('personal.index')
+        return url_for('home')
 
 @users_bp.route('/login', methods=['GET', 'POST'])
 @utils.limiter.limit("50/hour")
@@ -695,63 +557,6 @@ def reset_password():
                 flash(f"{field}: {error}", 'danger')
     return render_template('users/reset_password.html', form=form, token=token, title=trans('general_reset_password', lang=session.get('lang', 'en')))
 
-@users_bp.route('/setup_wizard', methods=['GET', 'POST'])
-@login_required
-@utils.limiter.limit("50/hour")
-def setup_wizard():
-    try:
-        db = utils.get_mongo_db()
-        user_id = request.args.get('user_id', current_user.id) if utils.is_admin() and request.args.get('user_id') else current_user.id
-        user = db.users.find_one({'_id': user_id})
-        if not user:
-            flash(trans('general_user_not_found', default='User not found'), 'danger')
-            logger.warning(f"Setup wizard failed: User {user_id} not found")
-            return redirect(url_for('users.logout'))
-
-        if user.get('setup_complete', False):
-            return redirect(get_post_login_redirect(user.get('role', 'trader')))
-
-        form = BusinessSetupForm()
-        if form.validate_on_submit():
-            if form.back.data:
-                flash(trans('general_setup_canceled', default='Business setup canceled'), 'info')
-                logger.info(f"Business setup canceled for user: {user_id}, session_id: {session.get('session_id')}")
-                return redirect(url_for('settings.profile', user_id=user_id) if utils.is_admin() else url_for('settings.profile'))
-
-            db.users.update_one(
-                {'_id': user_id},
-                {
-                    '$set': {
-                        'business_details': {
-                            'name': form.business_name.data.strip(),
-                            'address': form.address.data.strip(),
-                            'industry': form.industry.data,
-                            'products_services': form.products_services.data.strip(),
-                            'phone_number': form.phone_number.data.strip()
-                        },
-                        'language': form.language.data,
-                        'setup_complete': True
-                    }
-                }
-            )
-            log_audit_action('complete_setup_wizard', {'user_id': user_id, 'updated_by': current_user.id})
-            logger.info(f"Business setup completed for user: {user_id} by {current_user.id}, session_id: {session.get('session_id')}")
-            flash(trans('general_business_setup_success', default='Business setup completed'), 'success')
-            return redirect(url_for('settings.profile', user_id=user_id) if utils.is_admin() else get_post_login_redirect(user.get('role', 'trader')))
-        else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    flash(f"{field}: {error}", 'danger')
-        return render_template('users/business_setup.html', form=form, title=trans('general_business_setup', lang=session.get('lang', 'en')))
-    except errors.PyMongoError as e:
-        logger.error(f"MongoDB error during business setup for {user_id}: {str(e)}")
-        flash(trans('general_database_error', default='An error occurred while accessing the database. Please try again later.'), 'danger')
-        return render_template('users/business_setup.html', form=form, title=trans('general_business_setup', lang=session.get('lang', 'en'))), 500
-    except Exception as e:
-        logger.error(f"Unexpected error during business setup for {user_id}: {str(e)}")
-        flash(trans('general_error', default='An error occurred. Please try again.'), 'danger')
-        return render_template('perosnal/GENERAL/error.html', form=form, title=trans('general_business_setup', lang=session.get('lang', 'en'))), 500
-
 @users_bp.route('/personal_setup_wizard', methods=['GET', 'POST'])
 @login_required
 @utils.limiter.limit("50/hour")
@@ -808,63 +613,6 @@ def personal_setup_wizard():
         flash(trans('general_error', default='An error occurred. Please try again.'), 'danger')
         return render_template('users/personal_setup.html', form=form, title=trans('general_personal_setup', lang=session.get('lang', 'en'))), 500
 
-@users_bp.route('/agent_setup_wizard', methods=['GET', 'POST'])
-@login_required
-@utils.limiter.limit("50/hour")
-def agent_setup_wizard():
-    try:
-        db = utils.get_mongo_db()
-        user_id = request.args.get('user_id', current_user.id) if utils.is_admin() and request.args.get('user_id') else current_user.id
-        user = db.users.find_one({'_id': user_id})
-        if not user:
-            flash(trans('general_user_not_found', default='User not found'), 'danger')
-            logger.warning(f"Agent setup wizard failed: User {user_id} not found")
-            return redirect(url_for('users.logout'))
-
-        if user.get('setup_complete', False):
-            return redirect(get_post_login_redirect(user.get('role', 'agent')))
-
-        form = AgentSetupForm()
-        if form.validate_on_submit():
-            if form.back.data:
-                flash(trans('general_setup_canceled', default='Agent setup canceled'), 'info')
-                logger.info(f"Agent setup canceled for user: {user_id}, session_id: {session.get('session_id')}")
-                return redirect(url_for('settings.profile', user_id=user_id) if utils.is_admin() else url_for('settings.profile'))
-
-            db.users.update_one(
-                {'_id': user_id},
-                {
-                    '$set': {
-                        'agent_details': {
-                            'agent_name': form.agent_name.data.strip(),
-                            'agent_id': form.agent_id.data.strip(),
-                            'area': form.area.data.strip(),
-                            'role': form.role.data,
-                            'email': form.email.data.strip().lower(),
-                            'phone': form.phone.data.strip()
-                        },
-                        'language': form.language.data,
-                        'setup_complete': True
-                    }
-                }
-            )
-            log_audit_action('complete_agent_setup_wizard', {'user_id': user_id, 'updated_by': current_user.id})
-            logger.info(f"Agent setup completed for user: {user_id} by {current_user.id}, session_id: {session.get('session_id')}")
-            flash(trans('agents_setup_success', default='Agent setup completed'), 'success')
-            return redirect(url_for('settings.profile', user_id=user_id) if utils.is_admin() else get_post_login_redirect(user.get('role', 'agent')))
-        else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    flash(f"{field}: {error}", 'danger')
-        return render_template('users/agent_setup.html', form=form, title=trans('agents_setup', lang=session.get('lang', 'en')))
-    except errors.PyMongoError as e:
-        logger.error(f"MongoDB error during agent setup for {user_id}: {str(e)}")
-        flash(trans('general_database_error', default='An error occurred while accessing the database. Please try again later.'), 'danger')
-        return render_template('users/agent_setup.html', form=form, title=trans('agents_setup', lang=session.get('lang', 'en'))), 500
-    except Exception as e:
-        logger.error(f"Unexpected error during agent setup for {user_id}: {str(e)}")
-        flash(trans('general_error', default='An error occurred. Please try again.'), 'danger')
-        return render_template('users/agent_setup.html', form=form, title=trans('agents_setup', lang=session.get('lang', 'en'))), 500
 
 @users_bp.route('/logout')
 @login_required
@@ -905,40 +653,3 @@ def logout():
         response.set_cookie(current_app.config['SESSION_COOKIE_NAME'], '', expires=0, httponly=True, secure=current_app.config.get('SESSION_COOKIE_SECURE', True))
         response.set_cookie('remember_token', '', expires=0, httponly=True, secure=True)
         return response
-
-@users_bp.route('/auth/signin')
-def signin():
-    try:
-        return redirect(url_for('users.login'))
-    except Exception as e:
-        logger.error(f"Error redirecting /auth/signin to login: {str(e)}")
-        flash(trans('general_error', default='An error occurred. Please try again.'), 'danger')
-        return redirect(url_for('users.login')), 500
-
-@users_bp.route('/auth/signup')
-def signup_redirect():
-    try:
-        return redirect(url_for('users.signup'))
-    except Exception as e:
-        logger.error(f"Error redirecting /auth/signup to signup: {str(e)}")
-        flash(trans('general_error', default='An error occurred. Please try again.'), 'danger')
-        return redirect(url_for('users.signup')), 500
-
-@users_bp.route('/auth/forgot-password')
-def forgot_password_redirect():
-    try:
-        return redirect(url_for('users.forgot_password'))
-    except Exception as e:
-        logger.error(f"Error redirecting /auth/forgot-password to forgot_password: {str(e)}")
-        flash(trans('general_error', default='An error occurred. Please try again.'), 'danger')
-        return redirect(url_for('users.forgot_password')), 500
-
-@users_bp.route('/auth/reset-password')
-def reset_password_redirect():
-    try:
-        token = request.args.get('token')
-        return redirect(url_for('users.reset_password', token=token))
-    except Exception as e:
-        logger.error(f"Error redirecting /auth/reset-password to reset_password: {str(e)}")
-        flash(trans('general_error', default='An error occurred. Please try again.'), 'danger')
-        return redirect(url_for('users.forgot_password')), 500
