@@ -35,21 +35,14 @@ try:
     from .personal_finance.bill_translations import BILL_TRANSLATIONS
     from .personal_finance.budget_translations import BUDGET_TRANSLATIONS
     from .personal_finance.shopping_translations import SHOPPING_TRANSLATIONS
-    from .personal_finance.food_order_translations import FOOD_ORDER_TRANSLATIONS
     
     # Accounting Tools
     from .accounting_tools.admin_translations import ADMIN_TRANSLATIONS
-    from .accounting_tools.agents_translations import AGENTS_TRANSLATIONS
     from .accounting_tools.ficore_credits_translations import FICORE_CREDITS_TRANSLATIONS
-    from .accounting_tools.creditors_translations import CREDITORS_TRANSLATIONS
-    from .accounting_tools.debtors_translations import DEBTORS_TRANSLATIONS
-    from .accounting_tools.payments_translations import PAYMENTS_TRANSLATIONS
-    from .accounting_tools.receipts_translations import RECEIPTS_TRANSLATIONS
     from .accounting_tools.reports_translations import REPORTS_TRANSLATIONS
     
     # General Tools
     from .general_tools.general_translations import GENERAL_TRANSLATIONS
-    from .general_tools.tax_translations import TAX_TRANSLATIONS
     
 except ImportError as e:
     logger.error(f"Failed to import translation module: {str(e)}", exc_info=True)
@@ -61,21 +54,13 @@ translation_modules = {
     'bill': BILL_TRANSLATIONS,
     'budget': BUDGET_TRANSLATIONS,
     'shopping': SHOPPING_TRANSLATIONS,
-    'food_order': FOOD_ORDER_TRANSLATIONS,
     
     # Accounting Tools
     'admin': ADMIN_TRANSLATIONS,
-    'agents': AGENTS_TRANSLATIONS,
-    'credits': FICORE_CREDITS_TRANSLATIONS,
-    'creditors': CREDITORS_TRANSLATIONS,
-    'debtors': DEBTORS_TRANSLATIONS,
-    'payments': PAYMENTS_TRANSLATIONS,
-    'receipts': RECEIPTS_TRANSLATIONS,
     'reports': REPORTS_TRANSLATIONS,
     
     # General Tools
     'general': GENERAL_TRANSLATIONS,
-    'tax': TAX_TRANSLATIONS,
 }
 
 # Map key prefixes to module names
@@ -84,16 +69,9 @@ KEY_PREFIX_TO_MODULE = {
     'bill_': 'bill',
     'budget_': 'budget',
     'shopping_': 'shopping',
-    'food_order_': 'food_order',
     
     # Accounting Tools prefixes
     'admin_': 'admin',
-    'agents_': 'agents',
-    'credits_': 'credits',
-    'creditors_': 'creditors',
-    'debtors_': 'debtors',
-    'payments_': 'payments',
-    'receipts_': 'receipts',
     'reports_': 'reports',
     
     # General Tools prefixes
@@ -102,8 +80,6 @@ KEY_PREFIX_TO_MODULE = {
     'search_': 'tax',
     'filter_': 'tax',
     'export_': 'tax',
-    'api_': 'tax',
-    'tax_': 'tax',
     'backup_': 'tax',
     'maintenance_': 'tax',
     'webhook_': 'tax',
