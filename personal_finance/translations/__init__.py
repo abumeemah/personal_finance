@@ -36,11 +36,6 @@ try:
     from .personal_finance.budget_translations import BUDGET_TRANSLATIONS
     from .personal_finance.shopping_translations import SHOPPING_TRANSLATIONS
     
-    # Accounting Tools
-    from .accounting_tools.admin_translations import ADMIN_TRANSLATIONS
-    from .accounting_tools.ficore_credits_translations import FICORE_CREDITS_TRANSLATIONS
-    from .accounting_tools.reports_translations import REPORTS_TRANSLATIONS
-    
     # General Tools
     from .general_tools.general_translations import GENERAL_TRANSLATIONS
     
