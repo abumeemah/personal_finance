@@ -290,15 +290,15 @@ def main():
                             db.budgets.delete_one({'_id': budget_id})  # Rollback on failure
                             current_app.logger.error(f"Failed to deduct Ficore Credit for creating budget {budget_id} by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
                             flash(trans('budget_credit_deduction_failed', default='Failed to deduct Ficore Credit for creating budget.'), 'danger')
-                            return redirect(url_for('personal.budget.main', tab='create-budget'))
+                            return redirect(url_for('budget.main', tab='create-budget'))
                     current_app.logger.info(f"Budget {budget_id} saved successfully to MongoDB for session {session['sid']}", extra={'session_id': session['sid']})
                     flash(trans("budget_completed_success", default='Budget created successfully!'), "success")
-                    return redirect(url_for('personal.budget.main', tab='dashboard'))
+                    return redirect(url_for('budget.main', tab='dashboard'))
                 except Exception as e:
                     current_app.logger.error(f"Failed to save budget {budget_id} to MongoDB for session {session['sid']}: {str(e)}", extra={'session_id': session['sid']})
                     flash(trans("budget_storage_error", default='Error saving budget.'), "danger")
                     return render_template(
-                        'personal/BUDGET/budget_main.html',
+                        'budget_main.html',
                         form=form,
                         budgets={},
                         latest_budget={
@@ -343,7 +343,7 @@ def main():
                 if not budget:
                     current_app.logger.warning(f"Budget {budget_id} not found for deletion", extra={'session_id': session.get('sid', 'unknown')})
                     flash(trans("budget_not_found", default='Budget not found.'), "danger")
-                    return redirect(url_for('personal.budget.main', tab='dashboard'))
+                    return redirect(url_for('budget.main', tab='dashboard'))
                 if current_user.is_authenticated and not is_admin():
                     if not check_ficore_credit_balance(required_amount=1, user_id=current_user.id):
                         current_app.logger.warning(f"Insufficient Ficore Credits for deleting budget {budget_id} by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
@@ -363,7 +363,7 @@ def main():
                             if not deduct_ficore_credits(db, current_user.id, 1, 'delete_budget', budget_id):
                                 current_app.logger.error(f"Failed to deduct Ficore Credit for deleting budget {budget_id} by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
                                 flash(trans('budget_credit_deduction_failed', default='Failed to deduct Ficore Credit for deleting budget.'), 'danger')
-                                return redirect(url_for('personal.budget.main', tab='dashboard'))
+                                return redirect(url_for('budget.main', tab='dashboard'))
                         current_app.logger.info(f"Deleted budget ID {budget_id} for session {session['sid']}", extra={'session_id': session['sid']})
                         flash(trans("budget_deleted_success", default='Budget deleted successfully!'), "success")
                     else:
@@ -372,7 +372,7 @@ def main():
                 except Exception as e:
                     current_app.logger.error(f"Failed to delete budget ID {budget_id} for session {session['sid']}: {str(e)}", extra={'session_id': session['sid']})
                     flash(trans("budget_delete_failed", default='Error deleting budget.'), "danger")
-                return redirect(url_for('personal.budget.main', tab='dashboard'))
+                return redirect(url_for('budget.main', tab='dashboard'))
 
         budgets = list(db.budgets.find(filter_criteria).sort('created_at', -1).limit(10))
         current_app.logger.info(f"Read {len(budgets)} records from MongoDB budgets collection [session: {session['sid']}]", extra={'session_id': session['sid']})
@@ -475,7 +475,7 @@ def main():
         current_app.logger.debug(f"Latest budget: {latest_budget}", extra={'session_id': session.get('sid', 'unknown')})
         current_app.logger.debug(f"Categories: {categories}", extra={'session_id': session.get('sid', 'unknown')})
         return render_template(
-            'personal/BUDGET/budget_main.html',
+            'budget_main.html',
             form=form,
             budgets=budgets_dict,
             latest_budget=latest_budget,
@@ -490,7 +490,7 @@ def main():
         current_app.logger.exception(f"Unexpected error in budget.main active_tab: {active_tab}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans('budget_dashboard_load_error', default='Error loading budget dashboard.'), 'danger')
         return render_template(
-            'personal/BUDGET/budget_main.html',
+            'budget_main.html',
             form=form,
             budgets={},
             latest_budget={
