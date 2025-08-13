@@ -9,7 +9,7 @@
         <p><strong>{{ t('general_collaborators', default='Collaborators') | e }}:</strong> {{ selected_list.collaborators | join(', ') | e or t('general_none', default='None') | e }}</p>
     </div>
     <div class="col-md-6">
-        <form method="POST" action="{{ url_for('personal.shopping.manage_list', list_id=selected_list.id) | e }}" id="updateListForm" class="validate-form">
+        <form method="POST" action="{{ url_for('shopping.manage_list', list_id=selected_list.id) | e }}" id="updateListForm" class="validate-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() | e }}">
             <input type="hidden" name="action" value="save_list_changes">
             <div class="mb-3">
@@ -73,7 +73,7 @@
                                     onclick="openEditModal('{{ item.id | e }}', '{{ item.name | e }}', {{ item.quantity | e }}, '{{ item.price_raw | e }}', '{{ item.unit | e }}', '{{ item.category | e }}', '{{ item.status | e }}', '{{ item.store | e }}', {{ item.frequency | e }})">
                                     {{ t('general_edit', default='Edit') | e }}
                                 </button>
-                                <form method="POST" action="{{ url_for('personal.shopping.manage_list', list_id=selected_list.id) | e }}" style="display:inline;" class="delete-item-form">
+                                <form method="POST" action="{{ url_for('shopping.manage_list', list_id=selected_list.id) | e }}" style="display:inline;" class="delete-item-form">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() | e }}">
                                     <input type="hidden" name="action" value="delete_item">
                                     <input type="hidden" name="item_id" value="{{ item.id | e }}">
@@ -96,7 +96,7 @@
 <div class="row mt-3">
     <div class="col-12">
         <h5>{{ t('shopping_add_new_item', default='Add New Item') | e }}</h5>
-        <form method="POST" action="{{ url_for('personal.shopping.manage_list', list_id=selected_list.id) | e }}" id="addItemsForm" class="validate-form">
+        <form method="POST" action="{{ url_for('shopping.manage_list', list_id=selected_list.id) | e }}" id="addItemsForm" class="validate-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() | e }}">
             <input type="hidden" name="action" value="add_items">
             <div id="new-items-container">
@@ -115,7 +115,7 @@
 
 <div class="row mt-3">
     <div class="col-12">
-        <form method="POST" action="{{ url_for('personal.shopping.manage_list', list_id=selected_list.id) | e }}" id="saveListForm" class="validate-form">
+        <form method="POST" action="{{ url_for('shopping.manage_list', list_id=selected_list.id) | e }}" id="saveListForm" class="validate-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() | e }}">
             <input type="hidden" name="action" value="save_list_changes">
             <input type="hidden" name="save_list" value="true">
@@ -123,7 +123,7 @@
                 <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                 {{ t('shopping_save_list', default='Save List') | e }}
             </button>
-            <a href="{{ url_for('personal.shopping.export_list_pdf', list_id=selected_list.id) | e }}" class="btn btn-info">{{ t('shopping_export_pdf', default='Export to PDF') | e }}</a>
+            <a href="{{ url_for('shopping.export_list_pdf', list_id=selected_list.id) | e }}" class="btn btn-info">{{ t('shopping_export_pdf', default='Export to PDF') | e }}</a>
         </form>
     </div>
 </div>
