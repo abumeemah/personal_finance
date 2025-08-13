@@ -62,7 +62,7 @@ logger = SessionAdapter(root_logger, {})
 # Tool/navigation lists with endpoints
 _PERSONAL_TOOLS = [
     {
-        "endpoint": "personal.budget.main",
+        "endpoint": "budget.main",
         "label": "Budget",
         "label_key": "budget_budget_planner",
         "description_key": "budget_budget_desc",
@@ -70,7 +70,7 @@ _PERSONAL_TOOLS = [
         "icon": "bi-wallet"
     },
     {
-        "endpoint": "personal.bill.main",
+        "endpoint": "bill.main",
         "label": "Bills",
         "label_key": "bill_bill_planner",
         "description_key": "bill_bill_desc",
@@ -78,7 +78,7 @@ _PERSONAL_TOOLS = [
         "icon": "bi-receipt"
     },
     {
-        "endpoint": "personal.shopping.main",
+        "endpoint": "shopping.main",
         "label": "Shopping",
         "label_key": "shopping_management",
         "description_key": "shopping_management_desc",
@@ -89,7 +89,7 @@ _PERSONAL_TOOLS = [
 
 _PERSONAL_NAV = [
     {
-        "endpoint": "personal.index",
+        "endpoint": "index",
         "label": "Home",
         "label_key": "general_home",
         "description_key": "general_home_desc",
@@ -97,7 +97,7 @@ _PERSONAL_NAV = [
         "icon": "bi-house"
     },
     {
-        "endpoint": "personal.budget.main",
+        "endpoint": "budget.main",
         "label": "Budget",
         "label_key": "budget_budget_planner",
         "description_key": "budget_budget_desc",
@@ -105,7 +105,7 @@ _PERSONAL_NAV = [
         "icon": "bi-wallet"
     },
     {
-        "endpoint": "personal.bill.main",
+        "endpoint": "bill.main",
         "label": "Bills",
         "label_key": "bill_bill_planner",
         "description_key": "bill_bill_desc",
@@ -113,7 +113,7 @@ _PERSONAL_NAV = [
         "icon": "bi-receipt"
     },
     {
-        "endpoint": "personal.shopping.main",
+        "endpoint": "shopping.main",
         "label": "Shopping",
         "label_key": "shopping_management",
         "description_key": "shopping_management_desc",
@@ -132,7 +132,7 @@ _PERSONAL_NAV = [
 
 _PERSONAL_EXPLORE_FEATURES = [
     {
-        "endpoint": "personal.budget.main",
+        "endpoint": "budget.main",
         "label": "Budget",
         "label_key": "budget_budget_planner",
         "description_key": "budget_budget_desc",
@@ -140,7 +140,7 @@ _PERSONAL_EXPLORE_FEATURES = [
         "icon": "bi-wallet"
     },
     {
-        "endpoint": "personal.bill.main",
+        "endpoint": "bill.main",
         "label": "Bills",
         "label_key": "bill_bill_planner",
         "description_key": "bill_bill_desc",
@@ -148,7 +148,7 @@ _PERSONAL_EXPLORE_FEATURES = [
         "icon": "bi-receipt"
     },
     {
-        "endpoint": "personal.shopping.main",
+        "endpoint": "shopping.main",
         "label": "Shopping",
         "label_key": "shopping_management",
         "description_key": "shopping_management_desc",
@@ -252,7 +252,7 @@ def get_explore_features():
         with current_app.app_context():
             features = [
                 {
-                    "endpoint": "personal.budget.main",
+                    "endpoint": "budget.main",
                     "label": "Budget Planner",
                     "label_key": "budget_budget_planner",
                     "description_key": "budget_budget_desc",
@@ -261,7 +261,7 @@ def get_explore_features():
                     "category": "Personal"
                 },
                 {
-                    "endpoint": "personal.bill.main",
+                    "endpoint": "bill.main",
                     "label": "Bills",
                     "label_key": "bill_bill_planner",
                     "description_key": "bill_bill_desc",
@@ -270,7 +270,7 @@ def get_explore_features():
                     "category": "Personal"
                 },
                 {
-                    "endpoint": "personal.shopping.main",
+                    "endpoint": "shopping.main",
                     "label": "Shopping",
                     "label_key": "shopping_management",
                     "description_key": "shopping_management_desc",
