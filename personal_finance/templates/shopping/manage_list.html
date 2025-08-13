@@ -13,7 +13,7 @@
     {% set tool_name = 'shopping_title' %}
     {% set tool_icon = 'fa-cart-shopping' %}
     {% set subtitle = t('shopping_subtitle', default='Organize and manage your shopping lists efficiently') | e %}
-    {% include 'personal/GENERAL/tool_header.html' %}
+    {% include 'tool_header.html' %}
 
     <!-- Toast Container -->
     <div class="toast-container">
@@ -125,17 +125,17 @@
 
     <ul class="nav nav-tabs mb-4" id="shoppingTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <a class="nav-link" href="{{ url_for('personal.shopping.main', tab='create-list') | e }}">
+            <a class="nav-link" href="{{ url_for('shopping.main', tab='create-list') | e }}">
                 <i class="fa-solid fa-plus"></i> {{ t('shopping_create_list', default='Create List') | e }}
             </a>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link" href="{{ url_for('personal.shopping.main', tab='add-items') | e }}">
+            <a class="nav-link" href="{{ url_for('shopping.main', tab='add-items') | e }}">
                 <i class="fa-solid fa-cart-plus"></i> {{ t('shopping_add_items', default='Add Items') | e }}
             </a>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link" href="{{ url_for('personal.shopping.main', tab='view-lists') | e }}">
+            <a class="nav-link" href="{{ url_for('shopping.main', tab='view-lists') | e }}">
                 <i class="fa-solid fa-list"></i> {{ t('shopping_view_lists', default='View Lists') | e }}
             </a>
         </li>
@@ -172,7 +172,7 @@
                                 <div class="empty-state text-center">
                                     <i class="fa-solid fa-cart-shopping fa-3x mb-3"></i>
                                     <p>{{ t('shopping_no_list_selected', default='No active list selected. Please select an active list to manage.') | e }}</p>
-                                    <a href="{{ url_for('personal.shopping.main', tab='create-list') | e }}" class="btn btn-primary">
+                                    <a href="{{ url_for('shopping.main', tab='create-list') | e }}" class="btn btn-primary">
                                         <i class="fa-solid fa-plus"></i> {{ t('shopping_create_list', default='Create List') | e }}
                                     </a>
                                 </div>
@@ -182,7 +182,7 @@
                         <div id="manage-list-details" class="empty-state text-center">
                             <i class="fa-solid fa-cart-shopping fa-3x mb-3"></i>
                             <p>{{ t('shopping_no_lists', default='No active lists found. Create one to get started.') | e }}</p>
-                            <a href="{{ url_for('personal.shopping.main', tab='create-list') | e }}" class="btn btn-primary">
+                            <a href="{{ url_for('shopping.main', tab='create-list') | e }}" class="btn btn-primary">
                                 <i class="fa-solid fa-plus"></i> {{ t('shopping_create_list', default='Create List') | e }}
                             </a>
                         </div>
@@ -196,7 +196,7 @@
 
 {% block extra_scripts %}
 <script>
-    window.SHOPPING_GET_LIST_DETAILS_URL = "{{ url_for('personal.shopping.get_list_details') | e }}";
+    window.SHOPPING_GET_LIST_DETAILS_URL = "{{ url_for('shopping.get_list_details') | e }}";
     window.CSRF_TOKEN = "{{ csrf_token() | e }}";
 </script>
 <script defer src="{{ url_for('static', filename='js/shopping.js') | e }}"></script>
