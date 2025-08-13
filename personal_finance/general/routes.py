@@ -130,17 +130,10 @@ def feedback():
     current_app.logger.info('Handling feedback', extra={'ip_address': request.remote_addr})
     tool_options = [
         ['profile', trans('general_profile', default='Profile')],
-        ['credits', trans('credits_dashboard', default='Ficore Credits')],
-        ['debtors', trans('debtors_dashboard', default='Debtors')],
-        ['creditors', trans('creditors_dashboard', default='Creditors')],
-        ['receipts', trans('receipts_dashboard', default='Receipts')],
-        ['payment', trans('payments_dashboard', default='Payments')],
         ['report', trans('reports_dashboard', default='Reports')],
         ['budget', trans('budget_budget_planner', default='Budget')],
         ['bill', trans('bill_bill_planner', default='Bill')],
-        ['learning', trans('learning_hub_courses', default='Learning')],
-        ['taxation', trans('taxation_calculator', default='Taxation')]
-    ]
+     ]
     if request.method == 'POST':
         try:
             tool_name = request.form.get('tool_name')
@@ -203,3 +196,4 @@ def feedback():
                 return render_template('personal/GENERAL/error.html', error=str(e), title=trans('general_feedback', lang=lang)), 500
     # Handle GET request
     return render_template('general/feedback.html', tool_options=tool_options, title=trans('general_feedback', lang=lang))
+
