@@ -11,8 +11,6 @@ from flask_limiter.util import get_remote_address
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 from translations import trans
-import requests
-from werkzeug.routing import BuildError
 import time
 from wtforms import ValidationError
 
@@ -20,15 +18,11 @@ from wtforms import ValidationError
 from flask_login import LoginManager
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect
-from flask_babel import Babel
-from flask_compress import Compress
 
 # Initialize extensions
 login_manager = LoginManager()
 flask_session = Session()
 csrf = CSRFProtect()
-babel = Babel()
-compress = Compress()
 limiter = Limiter(key_func=get_remote_address, default_limits=['200 per day', '50 per hour'], storage_uri='memory://')
 
 # Set up logging with session support
@@ -91,14 +85,6 @@ _PERSONAL_TOOLS = [
         "tooltip_key": "shopping_tooltip",
         "icon": "bi-cart"
     },
-    {
-        "endpoint": "credits.history",
-        "label": "Ficore Credits",
-        "label_key": "credits_your_wallet",
-        "description_key": "credits_your_wallet_desc",
-        "tooltip_key": "credits_your_wallet_tooltip",
-        "icon": "bi-coin"
-    },
 ]
 
 _PERSONAL_NAV = [
@@ -111,13 +97,21 @@ _PERSONAL_NAV = [
         "icon": "bi-house"
     },
     {
+        "endpoint": "personal.budget.main",
+        "label": "Budget",
+        "label_key": "budget_budget_planner",
+        "description_key": "budget_budget_desc",
+        "tooltip_key": "budget_tooltip",
+        "icon": "bi-wallet"
+    },
+    {
         "endpoint": "personal.bill.main",
         "label": "Bills",
         "label_key": "bill_bill_planner",
         "description_key": "bill_bill_desc",
         "tooltip_key": "bill_tooltip",
         "icon": "bi-receipt"
-    },   
+    },
     {
         "endpoint": "personal.shopping.main",
         "label": "Shopping",
@@ -160,248 +154,6 @@ _PERSONAL_EXPLORE_FEATURES = [
         "description_key": "shopping_management_desc",
         "tooltip_key": "shopping_tooltip",
         "icon": "bi-cart"
-    },  
-    {
-        "endpoint": "credits.request_credits",
-        "label": "Ficore Credits",
-        "label_key": "credits_dashboard",
-        "description_key": "credits_dashboard_desc",
-        "tooltip_key": "credits_tooltip",
-        "icon": "bi-coin"
-    },   
-    {
-        "endpoint": "credits.history",
-        "label": "Ficore Credits",
-        "label_key": "credits_your_wallet",
-        "description_key": "credits_your_wallet_desc",
-        "tooltip_key": "credits_your_wallet_tooltip",
-        "icon": "bi-coin"
-    },
-    {
-        "endpoint": "taxation_bp.calculate_tax",
-        "label": "Taxation",
-        "label_key": "taxation_calculator",
-        "description_key": "taxation_calculator_desc",
-        "tooltip_key": "taxation_tooltip",
-        "icon": "bi-calculator"
-    },
-    {
-        "endpoint": "reports.index",
-        "label": "Reports",
-        "label_key": "personal_reports",
-        "description_key": "personal_reports_desc",
-        "tooltip_key": "personal_reports_tooltip",
-        "icon": "bi-journal-minus"
-    },
-]
-
-_BUSINESS_TOOLS = [ 
-    {
-        "endpoint": "debtors.index",
-        "label": "They Owe",
-        "label_key": "debtors_dashboard",
-        "description_key": "debtors_dashboard_desc",
-        "tooltip_key": "debtors_tooltip",
-        "icon": "bi-person-plus"
-    },
-    {
-        "endpoint": "creditors.index",
-        "label": "I Owe",
-        "label_key": "creditors_dashboard",
-        "description_key": "creditors_dashboard_desc",
-        "tooltip_key": "creditors_tooltip",
-        "icon": "bi-arrow-up-circle"
-    },    
-    {
-        "endpoint": "receipts.index",
-        "label": "MoneyIn",
-        "label_key": "receipts_dashboard",
-        "description_key": "receipts_dashboard",
-        "tooltip_key": "receipts_tooltip",
-        "icon": "bi-cash-coin"
-    },    
-    {
-        "endpoint": "payments.index",
-        "label": "MoneyOut",
-        "label_key": "payments_dashboard",
-        "description_key": "payments_dashboard",
-        "tooltip_key": "payments_tooltip",
-        "icon": "bi-calculator"
-    }, 
-    {
-        "endpoint": "credits.history",
-        "label": "Ficore Credits",
-        "label_key": "credits_your_wallet",
-        "description_key": "credits_your_wallet_desc",
-        "tooltip_key": "credits_your_wallet_tooltip",
-        "icon": "bi-coin"
-    },    
-    {
-        "endpoint": "reports.index",
-        "label": "Reports",
-        "label_key": "business_reports",
-        "description_key": "business_reports_desc",
-        "tooltip_key": "business_reports_tooltip",
-        "icon": "bi-journal-minus"
-    },
-]
-
-_BUSINESS_NAV = [
-    {
-        "endpoint": "general_bp.home",
-        "label": "Home",
-        "label_key": "general_business_home",
-        "description_key": "general_business_home_desc",
-        "tooltip_key": "general_business_home_tooltip",
-        "icon": "bi-house"
-    },
-    {
-        "endpoint": "debtors.index",
-        "label": "They Owe",
-        "label_key": "debtors_dashboard",
-        "description_key": "debtors_dashboard_desc",
-        "tooltip_key": "debtors_tooltip",
-        "icon": "bi-person-plus"
-    },
-    {
-        "endpoint": "credits.history",
-        "label": "Ficore Credits",
-        "label_key": "credits_your_wallet",
-        "description_key": "credits_your_wallet_desc",
-        "tooltip_key": "credits_your_wallet_tooltip",
-        "icon": "bi-coin"
-    },
-    {
-        "endpoint": "settings.profile",
-        "label": "Profile",
-        "label_key": "profile_settings",
-        "description_key": "profile_settings_desc",
-        "tooltip_key": "profile_tooltip",
-        "icon": "bi-person"
-    },
-]
-
-_BUSINESS_EXPLORE_FEATURES = [
-    {
-        "endpoint": "receipts.index",
-        "label": "MoneyIn",
-        "label_key": "receipts_dashboard",
-        "description_key": "receipts_dashboard",
-        "tooltip_key": "receipts_tooltip",
-        "icon": "bi-cash-coin"
-    }, 
-    {
-        "endpoint": "payments.index",
-        "label": "MoneyOut",
-        "label_key": "payments_dashboard",
-        "description_key": "payments_dashboard",
-        "tooltip_key": "payments_tooltip",
-        "icon": "bi-calculator"
-    },
-    {
-        "endpoint": "taxation_bp.calculate_tax",
-        "label": "Taxation",
-        "label_key": "taxation_calculator",
-        "description_key": "taxation_calculator_desc",
-        "tooltip_key": "taxation_tooltip",
-        "icon": "bi-calculator"
-    },
-    {
-        "endpoint": "debtors.index",
-        "label": "They Owe",
-        "label_key": "debtors_dashboard",
-        "description_key": "debtors_dashboard_desc",
-        "tooltip_key": "debtors_tooltip",
-        "icon": "bi-person-plus"
-    },
-    {
-        "endpoint": "creditors.index",
-        "label": "I Owe",
-        "label_key": "creditors_dashboard",
-        "description_key": "creditors_dashboard_desc",
-        "tooltip_key": "creditors_tooltip",
-        "icon": "bi-arrow-up-circle"
-    },
-    {
-        "endpoint": "credits.request_credits",
-        "label": "Ficore Credits",
-        "label_key": "credits_dashboard",
-        "description_key": "credits_dashboard_desc",
-        "tooltip_key": "credits_tooltip",
-        "icon": "bi-coin"
-    },
-    {
-        "endpoint": "reports.index",
-        "label": "Reports",
-        "label_key": "business_reports",
-        "description_key": "business_reports_desc",
-        "tooltip_key": "business_reports_tooltip",
-        "icon": "bi-journal-minus"
-    },
-]
-
-_AGENT_TOOLS = [
-    {
-        "endpoint": "agents_bp.agent_portal",
-        "label": "Agent Portal",
-        "label_key": "agents_dashboard",
-        "description_key": "agents_dashboard_desc",
-        "tooltip_key": "agents_tooltip",
-        "icon": "bi-person-workspace"
-    },
-    {
-        "endpoint": "agents_bp.manage_credits",
-        "label": "Ficore Credits",
-        "label_key": "credits_dashboard",
-        "description_key": "credits_dashboard_desc",
-        "tooltip_key": "credits_tooltip",
-        "icon": "bi-coin"
-    },
-]
-
-_AGENT_NAV = [
-    {
-        "endpoint": "agents_bp.agent_portal",
-        "label": "Agent Portal",
-        "label_key": "agents_dashboard",
-        "description_key": "agents_dashboard_desc",
-        "tooltip_key": "agents_tooltip",
-        "icon": "bi-person-workspace"
-    },
-    {
-        "endpoint": "agents_bp.agent_portal",
-        "label": "My Activity",
-        "label_key": "agents_my_activity",
-        "description_key": "agents_my_activity_desc",
-        "tooltip_key": "agents_my_activity_tooltip",
-        "icon": "bi-person-workspace"
-    },
-    {
-        "endpoint": "settings.profile",
-        "label": "Profile",
-        "label_key": "profile_settings",
-        "description_key": "profile_settings_desc",
-        "tooltip_key": "profile_tooltip",
-        "icon": "bi-person"
-    },
-]
-
-_AGENT_EXPLORE_FEATURES = [
-    {
-        "endpoint": "agents_bp.agent_portal",
-        "label": "Agent Portal",
-        "label_key": "agents_dashboard",
-        "description_key": "agents_dashboard_desc",
-        "tooltip_key": "agents_tooltip",
-        "icon": "bi-person-workspace"
-    },
-    {
-        "endpoint": "agents_bp.manage_credits",
-        "label": "Ficore Credits",
-        "label_key": "credits_dashboard",
-        "description_key": "credits_dashboard_desc",
-        "tooltip_key": "credits_tooltip",
-        "icon": "bi-coin"
     },
 ]
 
@@ -422,14 +174,6 @@ _ADMIN_TOOLS = [
         "tooltip_key": "admin_manage_users_tooltip",
         "icon": "bi-people"
     },
-    {
-        "endpoint": "admin.view_credit_requests",
-        "label": "Credit Ficore Credits",
-        "label_key": "admin_ficore_credits",
-        "description_key": "admin_ficore_credits_desc",
-        "tooltip_key": "admin_ficore_credits_tooltip",
-        "icon": "bi-coin"
-    },
 ]
 
 _ADMIN_NAV = [
@@ -442,14 +186,6 @@ _ADMIN_NAV = [
         "icon": "bi-speedometer"
     },
     {
-        "endpoint": "admin.view_credit_requests",
-        "label": "Credit Ficore Credits",
-        "label_key": "admin_ficore_credits",
-        "description_key": "admin_ficore_credits_desc",
-        "tooltip_key": "admin_ficore_credits_tooltip",
-        "icon": "bi-coin"
-    },
-    {
         "endpoint": "admin.manage_users",
         "label": "Manage Users",
         "label_key": "admin_manage_users",
@@ -458,12 +194,20 @@ _ADMIN_NAV = [
         "icon": "bi-people"
     },
     {
-        "endpoint": "admin.audit",
-        "label": "View Audit Logs",
-        "label_key": "admin_view_audit_logs",
-        "description_key": "admin_view_audit_logs_desc",
-        "tooltip_key": "admin_view_audit_logs_tooltip",
-        "icon": "bi-file-earmark-text"
+        "endpoint": "admin.admin_budgets",
+        "label": "Manage Budgets",
+        "label_key": "admin_manage_budgets",
+        "description_key": "admin_manage_budgets_desc",
+        "tooltip_key": "admin_manage_budgets_tooltip",
+        "icon": "bi-wallet"
+    },
+    {
+        "endpoint": "admin.admin_bills",
+        "label": "Manage Bills",
+        "label_key": "admin_manage_bills",
+        "description_key": "admin_manage_bills_desc",
+        "tooltip_key": "admin_manage_bills_tooltip",
+        "icon": "bi-receipt"
     },
 ]
 
@@ -483,14 +227,6 @@ _ADMIN_EXPLORE_FEATURES = [
         "description_key": "admin_manage_users_desc",
         "tooltip_key": "admin_manage_users_tooltip",
         "icon": "bi-people"
-    },
-    {
-        "endpoint": "admin.manage_agents",
-        "label": "Manage Agents",
-        "label_key": "admin_manage_agents",
-        "description_key": "admin_manage_agents_desc",
-        "tooltip_key": "admin_manage_agents_tooltip",
-        "icon": "bi-person-workspace"
     },
     {
         "endpoint": "admin.admin_budgets",
@@ -542,42 +278,6 @@ def get_explore_features():
                     "icon": "bi-cart",
                     "category": "Personal"
                 },
-                {
-                    "endpoint": "debtors.index",
-                    "label": "They Owe",
-                    "label_key": "debtors_dashboard",
-                    "description_key": "debtors_dashboard_desc",
-                    "tooltip_key": "debtors_tooltip",
-                    "icon": "bi-person-plus",
-                    "category": "Business"
-                },
-                {
-                    "endpoint": "receipts.index",
-                    "label": "MoneyIn",
-                    "label_key": "receipts_dashboard",
-                    "description_key": "receipts_dashboard",
-                    "tooltip_key": "receipts_tooltip",
-                    "icon": "bi-cash-coin",
-                    "category": "Business"
-                }, 
-                {
-                    "endpoint": "payments.index",
-                    "label": "MoneyOut",
-                    "label_key": "payments_dashboard",
-                    "description_key": "payments_dashboard",
-                    "tooltip_key": "payments_tooltip",
-                    "icon": "bi-calculator",
-                    "category": "Business"
-                },
-                {
-                    "endpoint": "agents_bp.agent_portal",
-                    "label": "Agent Portal",
-                    "label_key": "agents_dashboard",
-                    "description_key": "agents_dashboard_desc",
-                    "tooltip_key": "agents_tooltip",
-                    "icon": "bi-person-workspace",
-                    "category": "Agent"
-                },
             ]
             required_keys = ['endpoint', 'label', 'label_key', 'description_key', 'tooltip_key', 'icon']
             for feature in features:
@@ -598,12 +298,6 @@ def get_explore_features():
 PERSONAL_TOOLS = []
 PERSONAL_NAV = []
 PERSONAL_EXPLORE_FEATURES = []
-BUSINESS_TOOLS = []
-BUSINESS_NAV = []
-BUSINESS_EXPLORE_FEATURES = []
-AGENT_TOOLS = []
-AGENT_NAV = []
-AGENT_EXPLORE_FEATURES = []
 ADMIN_TOOLS = []
 ADMIN_NAV = []
 ADMIN_EXPLORE_FEATURES = []
@@ -617,8 +311,6 @@ def initialize_tools_with_urls(app):
         app: Flask application instance
     """
     global PERSONAL_TOOLS, PERSONAL_NAV, PERSONAL_EXPLORE_FEATURES
-    global BUSINESS_TOOLS, BUSINESS_NAV, BUSINESS_EXPLORE_FEATURES
-    global AGENT_TOOLS, AGENT_NAV, AGENT_EXPLORE_FEATURES
     global ADMIN_TOOLS, ADMIN_NAV, ADMIN_EXPLORE_FEATURES
     global ALL_TOOLS
     
@@ -627,19 +319,11 @@ def initialize_tools_with_urls(app):
             PERSONAL_TOOLS = generate_tools_with_urls(_PERSONAL_TOOLS)
             PERSONAL_NAV = generate_tools_with_urls(_PERSONAL_NAV)
             PERSONAL_EXPLORE_FEATURES = generate_tools_with_urls(_PERSONAL_EXPLORE_FEATURES)
-            BUSINESS_TOOLS = generate_tools_with_urls(_BUSINESS_TOOLS)
-            BUSINESS_NAV = generate_tools_with_urls(_BUSINESS_NAV)
-            BUSINESS_EXPLORE_FEATURES = generate_tools_with_urls(_BUSINESS_EXPLORE_FEATURES)
-            AGENT_TOOLS = generate_tools_with_urls(_AGENT_TOOLS)
-            AGENT_NAV = generate_tools_with_urls(_AGENT_NAV)
-            AGENT_EXPLORE_FEATURES = generate_tools_with_urls(_AGENT_EXPLORE_FEATURES)
             ADMIN_TOOLS = generate_tools_with_urls(_ADMIN_TOOLS)
             ADMIN_NAV = generate_tools_with_urls(_ADMIN_NAV)
             ADMIN_EXPLORE_FEATURES = generate_tools_with_urls(_ADMIN_EXPLORE_FEATURES)
             ALL_TOOLS = (
                 PERSONAL_TOOLS +
-                BUSINESS_TOOLS +
-                AGENT_TOOLS +
                 ADMIN_TOOLS +
                 generate_tools_with_urls([{
                     "endpoint": "admin.dashboard",
@@ -1020,7 +704,7 @@ def requires_role(role):
     Decorator to require specific user role.
     
     Args:
-        role: Required role (e.g., 'admin', 'agent', 'personal') or list of roles
+        role: Required role (e.g., 'admin', 'personal') or list of roles
     
     Returns:
         Decorator function
@@ -1045,91 +729,6 @@ def requires_role(role):
                 return f(*args, **kwargs)
         return decorated_function
     return decorator
-
-def check_ficore_credit_balance(required_amount=1, user_id=None):
-    """
-    Check if user has sufficient Ficore Credit balance with enhanced logging.
-    
-    Args:
-        required_amount: Required credit amount (default: 1)
-        user_id: User ID (optional, will use current_user if not provided)
-    
-    Returns:
-        bool: True if user has sufficient balance, False otherwise
-    """
-    try:
-        with current_app.app_context():
-            from flask_login import current_user
-            # Validate required_amount
-            if not isinstance(required_amount, (int, float)) or required_amount < 0:
-                logger.error(
-                    f"Invalid required_amount {required_amount} for credit balance check",
-                    extra={'session_id': session.get('sid', 'no-session-id'), 'user_id': user_id or 'unknown'}
-                )
-                return False
-            
-            # Determine user_id
-            if user_id is None and current_user.is_authenticated:
-                user_id = current_user.id
-            if not user_id:
-                logger.error(
-                    f"No user_id provided and no authenticated user for credit balance check",
-                    extra={'session_id': session.get('sid', 'no-session-id'), 'user_id': 'unknown'}
-                )
-                return False
-            
-            # Validate user_id
-            if not isinstance(user_id, str) or not user_id.strip():
-                logger.error(
-                    f"Invalid user_id format: {user_id}",
-                    extra={'session_id': session.get('sid', 'no-session-id'), 'user_id': user_id or 'unknown'}
-                )
-                return False
-            
-            db = get_mongo_db()
-            if db is None:
-                logger.error(
-                    f"Failed to connect to MongoDB for credit balance check for user {user_id}",
-                    extra={'session_id': session.get('sid', 'no-session-id'), 'user_id': user_id}
-                )
-                return False
-            
-            user_query = get_user_query(user_id)
-            user = db.users.find_one(user_query)
-            if not user:
-                logger.error(
-                    f"User {user_id} not found for credit balance check",
-                    extra={'session_id': session.get('sid', 'no-session-id'), 'user_id': user_id}
-                )
-                return False
-            
-            current_balance = user.get('ficore_credit_balance', 0)
-            if not isinstance(current_balance, (int, float)) or current_balance < 0:
-                logger.warning(
-                    f"Invalid credit balance for user {user_id}: {current_balance}",
-                    extra={'session_id': session.get('sid', 'no-session-id'), 'user_id': user_id}
-                )
-                return False
-            
-            if current_balance < required_amount:
-                logger.warning(
-                    f"Insufficient credits for user {user_id}: required {required_amount}, available {current_balance}",
-                    extra={'session_id': session.get('sid', 'no-session-id'), 'user_id': user_id}
-                )
-                return False
-            
-            logger.debug(
-                f"Credit balance check passed for user {user_id}: required {required_amount}, available {current_balance}",
-                extra={'session_id': session.get('sid', 'no-session-id'), 'user_id': user_id}
-            )
-            return True
-    except Exception as e:
-        logger.error(
-            f"Unexpected error checking Ficore Credit balance for user {user_id}: {str(e)}",
-            exc_info=True,
-            extra={'session_id': session.get('sid', 'no-session-id'), 'user_id': user_id or 'unknown'}
-        )
-        return False
 
 def get_user_query(user_id):
     """
@@ -1322,86 +921,6 @@ def log_user_action(action, details=None, user_id=None):
     except Exception as e:
         logger.error(f"{trans('general_user_action_log_error', default='Error logging user action')}: {str(e)}", exc_info=True)
 
-def send_sms_reminder(recipient, message):
-    """
-    Send an SMS reminder to the specified recipient.
-    
-    Args:
-        recipient: Phone number of the recipient
-        message: Message to send
-    
-    Returns:
-        tuple: (success, api_response)
-    """
-    try:
-        with current_app.app_context():
-            recipient = re.sub(r'\D', '', recipient)
-            if recipient.startswith('0'):
-                recipient = '234' + recipient[1:]
-            elif not recipient.startswith('+'):
-                recipient = '234' + recipient
-            sms_api_url = current_app.config.get('SMS_API_URL', 'https://api.smsprovider.com/send')
-            sms_api_key = current_app.config.get('SMS_API_KEY', '')
-            if not sms_api_key:
-                logger.warning('SMS_API_KEY not set, cannot send SMS')
-                return False, {'error': 'SMS_API_KEY not configured'}
-            payload = {
-                'to': f'+{recipient}',
-                'message': message,
-                'api_key': sms_api_key
-            }
-            response = requests.post(sms_api_url, json=payload, timeout=10)
-            response_data = response.json()
-            if response.status_code == 200 and response_data.get('success', False):
-                logger.info(f"SMS sent to {recipient}")
-                return True, response_data
-            else:
-                logger.error(f"Failed to send SMS to {recipient}: {response_data}")
-                return False, response_data
-    except Exception as e:
-        logger.error(f"Error sending SMS to {recipient}: {str(e)}", exc_info=True)
-        return False, {'error': str(e)}
-
-def send_whatsapp_reminder(recipient, message):
-    """
-    Send a WhatsApp reminder to the specified recipient.
-    
-    Args:
-        recipient: Phone number of the recipient
-        message: Message to send
-    
-    Returns:
-        tuple: (success, api_response)
-    """
-    try:
-        with current_app.app_context():
-            recipient = re.sub(r'\D', '', recipient)
-            if recipient.startswith('0'):
-                recipient = '234' + recipient[1:]
-            elif not recipient.startswith('+'):
-                recipient = '234' + recipient
-            whatsapp_api_url = current_app.config.get('WHATSAPP_API_URL', 'https://api.whatsapp.com/send')
-            whatsapp_api_key = current_app.config.get('WHATSAPP_API_KEY', '')
-            if not whatsapp_api_key:
-                logger.warning('WHATSAPP_API_KEY not set, cannot send WhatsApp message')
-                return False, {'error': 'WHATSAPP_API_KEY not configured'}
-            payload = {
-                'phone': f'+{recipient}',
-                'text': message,
-                'api_key': whatsapp_api_key
-            }
-            response = requests.post(whatsapp_api_url, json=payload, timeout=10)
-            response_data = response.json()
-            if response.status_code == 200 and response_data.get('success', False):
-                logger.info(f"WhatsApp message sent to {recipient}")
-                return True, response_data
-            else:
-                logger.error(f"Failed to send WhatsApp message to {recipient}: {response_data}")
-                return False, response_data
-    except Exception as e:
-        logger.error(f"Error sending WhatsApp message to {recipient}: {str(e)}", exc_info=True)
-        return False, {'error': str(e)}
-
 def get_recent_activities(user_id=None, is_admin_user=False, db=None, session_id=None, limit=10):
     """
     Fetch recent activities across all tools for a user or session.
@@ -1519,16 +1038,13 @@ def get_all_recent_activities(user_id=None, is_admin_user=False, db=None, sessio
 
 # Export all functions and variables
 __all__ = [
-    'login_manager', 'clean_currency', 'log_tool_usage', 'flask_session', 'csrf', 'babel', 'compress', 'limiter',
+    'login_manager', 'clean_currency', 'log_tool_usage', 'flask_session', 'csrf', 'limiter',
     'get_limiter', 'create_anonymous_session', 'trans_function', 'is_valid_email',
-    'get_mongo_db', 'close_mongo_db', 'get_mail', 'requires_role', 'check_ficore_credit_balance',
+    'get_mongo_db', 'close_mongo_db', 'get_mail', 'requires_role',
     'get_user_query', 'is_admin', 'format_currency', 'format_date', 'sanitize_input',
     'generate_unique_id', 'validate_required_fields', 'get_user_language',
-    'log_user_action', 'send_sms_reminder', 'send_whatsapp_reminder',
-    'initialize_tools_with_urls',
+    'log_user_action', 'initialize_tools_with_urls',
     'PERSONAL_TOOLS', 'PERSONAL_NAV', 'PERSONAL_EXPLORE_FEATURES',
-    'BUSINESS_TOOLS', 'BUSINESS_NAV', 'BUSINESS_EXPLORE_FEATURES',
-    'AGENT_TOOLS', 'AGENT_NAV', 'AGENT_EXPLORE_FEATURES',
     'ADMIN_TOOLS', 'ADMIN_NAV', 'ADMIN_EXPLORE_FEATURES', 'ALL_TOOLS', 'get_explore_features',
     'get_recent_activities', 'get_all_recent_activities'
 ]
