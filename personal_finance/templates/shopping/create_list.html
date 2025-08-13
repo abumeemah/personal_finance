@@ -13,7 +13,7 @@
     {% set tool_name = 'shopping_title' %}
     {% set tool_icon = 'fa-cart-shopping' %}
     {% set subtitle = t('shopping_subtitle', default='Organize and manage your shopping lists efficiently') | e %}
-    {% include 'personal/GENERAL/tool_header.html' %}
+    {% include 'tool_header.html' %}
 
     <!-- Toast Container -->
     <div class="toast-container">
@@ -38,12 +38,12 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link" href="{{ url_for('personal.shopping.main', tab='dashboard') | e }}">
+            <a class="nav-link" href="{{ url_for('shopping.main', tab='dashboard') | e }}">
                 <i class="fa-solid fa-chart-line"></i> {{ t('shopping_dashboard', default='Dashboard') | e }}
             </a>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link" href="{{ url_for('personal.shopping.main', tab='manage-list') | e }}">
+            <a class="nav-link" href="{{ url_for('shopping.main', tab='manage-list') | e }}">
                 <i class="fa-solid fa-list"></i> {{ t('shopping_manage_list', default='Manage List') | e }}
             </a>
         </li>
@@ -56,7 +56,7 @@
                     <h5><i class="fa-solid fa-cart-shopping"></i> {{ t('shopping_create_list', default='Create New Shopping List') | e }}</h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('personal.shopping.main', tab='create-list') | e }}" id="createListForm" class="validate-form">
+                    <form method="POST" action="{{ url_for('shopping.main', tab='create-list') | e }}" id="createListForm" class="validate-form">
                         {{ list_form.hidden_tag() }}
                         <input type="hidden" name="action" value="create_list">
                         <div class="mb-3">
@@ -84,7 +84,7 @@
 
 {% block extra_scripts %}
 <script>
-    window.SHOPPING_GET_LIST_DETAILS_URL = "{{ url_for('personal.shopping.get_list_details') | e }}";
+    window.SHOPPING_GET_LIST_DETAILS_URL = "{{ url_for('shopping.get_list_details') | e }}";
     window.CSRF_TOKEN = "{{ csrf_token() | e }}";
 </script>
 <script defer src="{{ url_for('static', filename='js/shopping.js') | e }}"></script>
