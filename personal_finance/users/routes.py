@@ -56,27 +56,38 @@ class TwoFactorForm(FlaskForm):
     submit = SubmitField(trans('general_verify_otp', default='Verify OTP'), render_kw={'class': 'btn btn-primary w-100'})
 
 class SignupForm(FlaskForm):
-    username = StringField(trans('general_username', default='Username'), [
-        validators.DataRequired(message=trans('general_username_required', default='Username is required')),
-        validators.Length(min=3, max=50, message=trans('general_username_length', default='Username must be between 3 and 50 characters')),
-        validators.Regexp(USERNAME_REGEX, message=trans('general_username_format', default='Username must be alphanumeric with underscores'))
-    ], render_kw={'class': 'form-control'})
-    email = StringField(trans('general_email', default='Email'), [
-        validators.DataRequired(message=trans('general_email_required', default='Email is required')),
-        validators.Email(message=trans('general_email_invalid', default='Invalid email address')),
-        validators.Length(max=254),
-        lambda form, field: utils.is_valid_email(field.data) or validators.ValidationError(trans('general_email_domain_invalid', default='Invalid email domain'))
-    ], render_kw={'class': 'form-control'})
-    password = PasswordField(trans('general_password', default='Password'), [
-        validators.DataRequired(message=trans('general_password_required', default='Password is required')),
-        validators.Length(min=6, message=trans('general_password_length', default='Password must be at least 6 characters')),
-        validators.Regexp(PASSWORD_REGEX, message=trans('general_password_format', default='Password must be at least 6 characters'))
-    ], render_kw={'class': 'form-control'})
-    language = SelectField(trans('general_language', default='Language'), choices=[
-        ('en', trans('general_english', default='English')),
-        ('ha', trans('general_hausa', default='Hausa'))
-    ], validators=[validators.DataRequired(message=trans('general_language_required', default='Language is required'))], render_kw={'class': 'form-select'})
-    submit = SubmitField(trans('general_signup', default='Sign Up'), render_kw={'class': 'btn btn-primary w-100'})
+    username = StringField(
+        trans('general_username', default='Username'),
+        [
+            validators.DataRequired(message=trans('general_username_required', default='Username is required')),
+            validators.Length(min=3, max=50, message=trans('general_username_length', default='Username must be between 3 and 50 characters')),
+            validators.Regexp(USERNAME_REGEX, message=trans('general_username_format', default='Username must be alphanumeric with underscores'))
+        ],
+        render_kw={'class': 'form-control'}
+    )
+    email = StringField(
+        trans('general_email', default='Email'),
+        [
+            validators.DataRequired(message=trans('general_email_required', default='Email is required')),
+            validators.Email(message=trans('general_email_invalid', default='Invalid email address')),
+            validators.Length(max=254),
+            lambda form, field: utils.is_valid_email(field.data) or validators.ValidationError(trans('general_email_domain_invalid', default='Invalid email domain'))
+        ],
+        render_kw={'class': 'form-control'}
+    )
+    password = PasswordField(
+        trans('general_password', default='Password'),
+        [
+            validators.DataRequired(message=trans('general_password_required', default='Password is required')),
+            validators.Length(min=6, message=trans('general_password_length', default='Password must be at least 6 characters')),
+            validators.Regexp(PASSWORD_REGEX, message=trans('general_password_format', default='Password must be at least 6 characters'))
+        ],
+        render_kw={'class': 'form-control'}
+    )
+    submit = SubmitField(
+        trans('general_signup', default='Sign Up'),
+        render_kw={'class': 'btn btn-primary w-100'}
+    )
 
 class ForgotPasswordForm(FlaskForm):
     email = StringField(trans('general_email', default='Email'), [
