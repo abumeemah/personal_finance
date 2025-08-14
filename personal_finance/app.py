@@ -36,44 +36,10 @@ from shopping.shopping import shopping_bp
 # Load environment variables
 load_dotenv()
 
-# Custom LogRecord factory to handle missing attributes
-def custom_record_factory(name, level, fn, lno, msg, args, exc_info, func=None, sinfo=None, **kwargs):
-    # Prevent recursive logging
-    if 'recursion_guard' in kwargs:
-        return logging.makeLogRecord({
-            'name': name,
-            'level': level,
-            'pathname': fn,
-            'lineno': lno,
-            'msg': msg,
-            'args': args,
-            'exc_info': exc_info,
-            'func': func,
-            'sinfo': sinfo,
-        })
-    record_dict = {
-        'name': name,
-        'level': level,
-        'pathname': fn,
-        'lineno': lno,
-        'msg': msg,
-        'args': args,
-        'exc_info': exc_info,
-        'func': func,
-        'sinfo': sinfo,
-        'session_id': kwargs.get('session_id', 'none'),
-        'user_role': kwargs.get('user_role', 'none'),
-        'ip_address': kwargs.get('ip_address', 'none'),
-        'recursion_guard': True,
-    }
-    return logging.makeLogRecord(record_dict)
-
-
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s [session: %(session_id)s, role: %(user_role)s, ip: %(ip_address)s]',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler(sys.stderr)]
 )
 logger = logging.getLogger('ficore_app')
@@ -236,8 +202,11 @@ def create_app():
     app.register_blueprint(general_bp, url_prefix='/general')
 
     # Template filters and context processors
+
+    # Add 't' as an alias for 'trans' for backwards compatibility in templates
     app.jinja_env.globals.update(
         trans=utils.trans_function,
+        t=utils.trans_function,  # Ensure 't' is available in Jinja templates
         is_admin=utils.is_admin,
         FACEBOOK_URL=app.config.get('FACEBOOK_URL', 'https://facebook.com/ficoreafrica'),
         TWITTER_URL=app.config.get('TWITTER_URL', 'https://x.com/ficoreafrica'),
@@ -289,6 +258,7 @@ def create_app():
         
         return {
             'trans': utils.trans_function,
+            't': utils.trans_function,  # Ensure 't' is available everywhere
             'current_lang': lang,
             'available_languages': [
                 {'code': code, 'name': utils.trans_function(f'lang_{code}', lang=lang, default=code.capitalize())}
@@ -353,6 +323,7 @@ def create_app():
 
     @app.errorhandler(404)
     def page_not_found(e):
+        # Ensure 't' is always in template context
         return render_template(
             'errors/404.html',
             error=str(e),
