@@ -28,7 +28,7 @@
     <!-- Explore Your Tools Button Section -->
     <div class="d-grid mb-4">
         {% if user.role == 'personal' %}
-            <button class="btn btn-primary btn-lg explore-tools-btn" onclick="location.href='{{ url_for('personal.index') }}'">
+            <button class="btn btn-primary btn-lg explore-tools-btn" onclick="location.href='{{ url_for('general_bp.home') }}'">
                 <i class="bi bi-compass me-2"></i> {{ t('settings_explore_personal_tools', default='Explore Your Personal Finance Tools') }}
             </button>
             <small class="text-muted text-center mt-2">{{ t('settings_explore_personal_description', default='Access budgeting, bill tracking, financial health scoring, and more!') }}</small>
