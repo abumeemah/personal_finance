@@ -37,20 +37,21 @@ from shopping.shopping import shopping_bp
 load_dotenv()
 
 # Custom LogRecord factory to handle missing attributes
-def custom_record_factory(*args, **kwargs):
-    # Ensure args[0] is a dict and add default values
-    record_dict = args[0] if args else {}
-    if isinstance(record_dict, dict):
-        record_dict.setdefault('session_id', 'none')
-        record_dict.setdefault('user_role', 'none')
-        record_dict.setdefault('ip_address', 'none')
-    else:
-        record_dict = {
-            'session_id': 'none',
-            'user_role': 'none',
-            'ip_address': 'none',
-            **record_dict
-        }
+def custom_record_factory(name, level, fn, lno, msg, args, exc_info, func=None, sinfo=None, **kwargs):
+    record_dict = {
+        'name': name,
+        'level': level,
+        'pathname': fn,
+        'lineno': lno,
+        'msg': msg,
+        'args': args,
+        'exc_info': exc_info,
+        'func': func,
+        'sinfo': sinfo,
+        'session_id': kwargs.get('session_id', 'none'),
+        'user_role': kwargs.get('user_role', 'none'),
+        'ip_address': kwargs.get('ip_address', 'none'),
+    }
     return logging.makeLogRecord(record_dict)
 
 logging.setLogRecordFactory(custom_record_factory)
