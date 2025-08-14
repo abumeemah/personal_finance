@@ -1,6 +1,6 @@
 import logging
 from bson import ObjectId
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session, Response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, FloatField, SelectField, SubmitField, TextAreaField, DateField, IntegerField, validators, BooleanField
@@ -8,29 +8,14 @@ from wtforms.validators import DataRequired, NumberRange, ValidationError
 from translations import trans
 import utils
 import datetime
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib import colors
-from reportlab.lib.units import inch
-from io import BytesIO, StringIO
-import csv
-import re
 from models import get_budgets, get_bills
-from werkzeug.utils import secure_filename
-import os
 from credits import ApproveCreditRequestForm, fix_ficore_credit_balances
-import random
-import string
 
 logger = logging.getLogger(__name__)
 
 admin_bp = Blueprint('admin', __name__, template_folder='templates/admin')
 
-# Regular expression for agent ID validation
-AGENT_ID_REGEX = re.compile(r'^[A-Z0-9]{8}$')
-
 # Form Definitions
-
 class CreditRequestsListForm(FlaskForm):
     status = SelectField(
         trans('credits_request_status_filter', default='Filter by Status'),
@@ -79,14 +64,11 @@ def dashboard():
         # Calculate system statistics
         stats = {
             'users': db.users.count_documents({}),
-            'records': db.data_records.count_documents({}),
-            'cashflows': db.cashflows.count_documents({}),
-            'credit_transactions': db.ficore_credit_transactions.count_documents({}),
-            'audit_logs': db.audit_logs.count_documents({}),
             'budgets': db.budgets.count_documents({}),
             'bills': db.bills.count_documents({}),
-            'payment_locations': db.payment_locations.count_documents({}),
-            'tax_deadlines': db.tax_deadlines.count_documents({})
+            'shopping_lists': db.shopping_lists.count_documents({}),
+            'credit_transactions': db.ficore_credit_transactions.count_documents({}),
+            'audit_logs': db.audit_logs.count_documents({})
         }
         
         # Get tool usage statistics
@@ -133,7 +115,6 @@ def view_feedbacks():
         flash(trans('admin_database_error', default='An error occurred while accessing the database'), 'danger')
         return render_template('admin/feedback_list.html', feedbacks=[]), 500
 
-
 @admin_bp.route('/users', methods=['GET'])
 @login_required
 @utils.requires_role('admin')
@@ -142,7 +123,7 @@ def manage_users():
     """View and manage users."""
     try:
         db = utils.get_mongo_db()
-        users = list(db.users.find({} if utils.is_admin() else {'role': {'$ne': 'admin'}}).sort('created_at', -1))
+        users = list(db.users.find({'role': {'$in': ['personal', 'admin']}}).sort('created_at', -1))
         for user in users:
             user['_id'] = str(user['_id'])
             user['username'] = user['_id']
@@ -166,6 +147,9 @@ def suspend_user(user_id):
         user = db.users.find_one(user_query)
         if not user:
             flash(trans('admin_user_not_found', default='User not found'), 'danger')
+            return redirect(url_for('admin.manage_users'))
+        if user['role'] == 'admin':
+            flash(trans('admin_cannot_suspend_admin', default='Cannot suspend an admin account'), 'danger')
             return redirect(url_for('admin.manage_users'))
         result = db.users.update_one(
             user_query,
@@ -198,13 +182,15 @@ def delete_user(user_id):
         if not user:
             flash(trans('admin_user_not_found', default='User not found'), 'danger')
             return redirect(url_for('admin.manage_users'))
-        db.data_records.delete_many({'user_id': user_id})
-        db.cashflows.delete_many({'user_id': user_id})
+        if user['role'] == 'admin':
+            flash(trans('admin_cannot_delete_admin', default='Cannot delete an admin account'), 'danger')
+            return redirect(url_for('admin.manage_users'))
+        db.budgets.delete_many({'user_id': user_id})
+        db.bills.delete_many({'user_id': user_id})
+        db.shopping_lists.delete_many({'user_id': user_id})
         db.ficore_credit_transactions.delete_many({'user_id': user_id})
         db.credit_requests.delete_many({'user_id': user_id})
         db.audit_logs.delete_many({'details.user_id': user_id})
-        db.budgets.delete_many({'user_id': user_id})
-        db.bills.delete_many({'user_id': user_id})
         result = db.users.delete_one(user_query)
         if result.deleted_count == 0:
             flash(trans('admin_user_not_deleted', default='User could not be deleted'), 'danger')
@@ -226,7 +212,7 @@ def delete_user(user_id):
 @utils.limiter.limit("10 per hour")
 def delete_item(collection, item_id):
     """Delete an item from a collection."""
-    valid_collections = ['data_records', 'cashflows', 'budgets', 'bills', 'payment_locations', 'tax_deadlines', 'credit_requests']
+    valid_collections = ['budgets', 'bills', 'shopping_lists', 'credit_requests']
     if collection not in valid_collections:
         flash(trans('admin_invalid_collection', default='Invalid collection selected'), 'danger')
         return redirect(url_for('admin.dashboard'))
@@ -240,7 +226,7 @@ def delete_item(collection, item_id):
             logger.info(f"Admin {current_user.id} deleted {collection} item {item_id}",
                         extra={'session_id': session.get('sid', 'no-session-id'), 'user_id': current_user.id})
             log_audit_action(f'delete_{collection}_item', {'item_id': item_id, 'collection': collection})
-        return redirect(url_for(f'admin.admin_{collection}' if collection in ['budgets', 'bills', 'credit_requests'] else 'admin.' + collection.replace('_', '')))
+        return redirect(url_for(f'admin.admin_{collection}' if collection in ['budgets', 'bills', 'credit_requests'] else 'admin.dashboard'))
     except Exception as e:
         logger.error(f"Error deleting {collection} item {item_id}: {str(e)}",
                      extra={'session_id': session.get('sid', 'no-session-id'), 'user_id': current_user.id})
@@ -470,63 +456,3 @@ def admin_mark_bill_paid(bill_id):
                      extra={'session_id': session.get('sid', 'no-session-id'), 'user_id': current_user.id})
         flash(trans('admin_database_error', default='An error occurred while accessing the database'), 'danger')
         return redirect(url_for('admin.admin_bills'))
-
-@admin_bp.route('/reports/customers', methods=['GET'])
-@login_required
-@utils.requires_role('admin')
-@utils.limiter.limit("50 per hour")
-def customer_reports():
-    """Generate customer reports in HTML, PDF, or CSV format."""
-    db = utils.get_mongo_db()
-    format = request.args.get('format', 'html')
-    users = list(db.users.find())
-    for user in users:
-        user['_id'] = str(user['_id'])
-        user['ficore_credit_balance'] = int(user.get('ficore_credit_balance', 0))  # Ensure integer
-    
-    if format == 'pdf':
-        return generate_customer_report_pdf(users)
-    elif format == 'csv':
-        return generate_customer_report_csv(users)
-    
-    return render_template('admin/customer_reports.html', users=users, title=trans('admin_customer_reports_title', default='Customer Reports'))
-
-def generate_customer_report_pdf(users):
-    """Generate a PDF report of customer data."""
-    buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
-    p.setFont("Helvetica", 12)
-    p.drawString(1 * inch, 10.5 * inch, trans('admin_customer_report_title', default='Customer Report'))
-    p.drawString(1 * inch, 10.2 * inch, f"{trans('admin_generated_on', default='Generated on')}: {datetime.datetime.utcnow().strftime('%Y-%m-%d')}")
-    y = 9.5 * inch
-    p.drawString(1 * inch, y, trans('admin_username', default='Username'))
-    p.drawString(2.5 * inch, y, trans('admin_email', default='Email'))
-    p.drawString(4 * inch, y, trans('user_role', default='Role'))
-    p.drawString(5.5 * inch, y, trans('admin_created_at', default='Created At'))
-    p.drawString(7 * inch, y, trans('ficore_credit_balance', default='Ficore Credit Balance'))  # Added column
-    y -= 0.3 * inch
-    for user in users:
-        p.drawString(1 * inch, y, user['_id'])
-        p.drawString(2.5 * inch, y, user['email'])
-        p.drawString(4 * inch, y, user['role'])
-        p.drawString(5.5 * inch, y, user['created_at'].strftime('%Y-%m-%d'))
-        p.drawString(7 * inch, y, str(user['ficore_credit_balance']))  # Display as integer
-        y -= 0.3 * inch
-        if y < 1 * inch:
-            p.showPage()
-            y = 10.5 * inch
-    p.showPage()
-    p.save()
-    buffer.seek(0)
-    return Response(buffer, mimetype='application/pdf', headers={'Content-Disposition': 'attachment;filename=customer_report.pdf'})
-
-def generate_customer_report_csv(users):
-    """Generate a CSV report of customer data."""
-    output = [[trans('admin_username', default='Username'), trans('admin_email', default='Email'), trans('user_role', default='Role'), trans('admin_created_at', default='Created At'), trans('ficore_credit_balance', default='Ficore Credit Balance')]]
-    for user in users:
-        output.append([user['_id'], user['email'], user['role'], user['created_at'].strftime('%Y-%m-%d'), str(user['ficore_credit_balance'])])
-    buffer = BytesIO()
-    writer = csv.writer(buffer, lineterminator='\n')
-    writer.writerows(output)
-    buffer.seek(0)
-    return Response(buffer, mimetype='text/csv', headers={'Content-Disposition': 'attachment;filename=customer_report.csv'})
