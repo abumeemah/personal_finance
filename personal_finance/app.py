@@ -303,7 +303,7 @@ def create_app():
                     {'_id': current_user.id},
                     {'$set': {'language': lang}}
                 )
-        return redirect(request.referrer or url_for('index'))
+        return redirect(request.referrer or url_for('home'))
 
     @app.route('/health')
     def health():
