@@ -64,17 +64,11 @@ def custom_record_factory(name, level, fn, lno, msg, args, exc_info, func=None, 
         'session_id': kwargs.get('session_id', 'none'),
         'user_role': kwargs.get('user_role', 'none'),
         'ip_address': kwargs.get('ip_address', 'none'),
-        'recursion_guard': True,  # Add guard to prevent recursion
+        'recursion_guard': True,
     }
     return logging.makeLogRecord(record_dict)
 
 logging.setLogRecordFactory(custom_record_factory)
-
-# DEBUG: environment variables loaded by app.config.from_mapping:
-print("DEBUG: environment variables loaded by app.config.from_mapping:")
-print("SECRET_KEY:", repr(os.getenv('SECRET_KEY')))
-print("MONGO_URI:", repr(os.getenv('MONGO_URI')))
-print("ADMIN_PASSWORD:", repr(os.getenv('ADMIN_PASSWORD')))
 
 # Configure logging
 logging.basicConfig(
@@ -84,7 +78,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger('ficore_app')
 
-# Initialize Flask app and extensions
+# Initialize Flask app
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 app.config.from_mapping(
@@ -102,11 +96,6 @@ app.config.from_mapping(
     SUPPORTED_LANGUAGES=['en', 'ha']
 )
 
-# DEBUGGING: Print app.config loaded values
-print("app.config['SECRET_KEY']:", repr(app.config.get('SECRET_KEY')))
-print("app.config['MONGO_URI']:", repr(app.config.get('MONGO_URI')))
-print("app.config['ADMIN_PASSWORD']:", repr(app.config.get('ADMIN_PASSWORD')))
-
 # Validate critical configuration
 for key in ['SECRET_KEY', 'MONGO_URI', 'ADMIN_PASSWORD']:
     if not app.config.get(key):
@@ -114,6 +103,7 @@ for key in ['SECRET_KEY', 'MONGO_URI', 'ADMIN_PASSWORD']:
         raise ValueError(f'{key} must be set')
 
 # Initialize MongoDB
+logger.info('Initializing MongoDB client with URI: %s', app.config['MONGO_URI'])
 client = MongoClient(
     app.config['MONGO_URI'],
     serverSelectionTimeoutMS=5000,
@@ -123,75 +113,78 @@ client = MongoClient(
     minPoolSize=5
 )
 app.extensions = {'mongo': client}
-client.admin.command('ping')
-
-# Initialize extensions
-Session(app)
-CSRFProtect(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'users.login'
-
-# Session decorator
-def ensure_session_id(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'sid' not in session:
-            if not current_user.is_authenticated:
-                utils.create_anonymous_session()
-                logger.info(f'New anonymous session created: {session["sid"]}')
-            else:
-                session['sid'] = str(uuid.uuid4())
-                session['is_anonymous'] = False
-                logger.info(f'New session for user {current_user.id}: {session["sid"]}')
-        return f(*args, **kwargs)
-    return decorated_function
-
-# User class
-class User(UserMixin):
-    def __init__(self, id, email, display_name=None, role='personal'):
-        self.id = id
-        self.email = email
-        self.display_name = display_name or id
-        self.role = role
-
-    @property
-    def is_active(self):
-        user = app.extensions['mongo']['ficodb'].users.find_one({'_id': self.id})
-        return user.get('is_active', True) if user else False
-
-    def get_id(self):
-        return str(self.id)
-
-@login_manager.user_loader
-def load_user(user_id):
-    user = app.extensions['mongo']['ficodb'].users.find_one({'_id': user_id})
-    if not user:
-        return None
-    return User(
-        id=user['_id'],
-        email=user['email'],
-        display_name=user.get('display_name', user['_id']),
-        role=user.get('role', 'personal')
-    )
+try:
+    client.admin.command('ping')
+    logger.info('MongoDB connection successful')
+except Exception as e:
+    logger.error('MongoDB connection failed: %s', str(e))
+    raise
 
 # App setup
 def create_app():
-    # Setup session
+    # Initialize extensions
     app.config.update(
         SESSION_MONGODB=app.extensions['mongo'],
         SESSION_MONGODB_DB='ficodb',
         SESSION_MONGODB_COLLECT='sessions'
     )
+    logger.info('Configuring flask_session with MongoDB client')
+    Session(app)
+    CSRFProtect(app)
+    login_manager = LoginManager(app)
+    login_manager.login_view = 'users.login'
+
+    # Session decorator
+    def ensure_session_id(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'sid' not in session:
+                if not current_user.is_authenticated:
+                    utils.create_anonymous_session()
+                    logger.info(f'New anonymous session created: {session["sid"]}')
+                else:
+                    session['sid'] = str(uuid.uuid4())
+                    session['is_anonymous'] = False
+                    logger.info(f'New session for user {current_user.id}: {session["sid"]}')
+            return f(*args, **kwargs)
+        return decorated_function
+
+    # User class
+    class User(UserMixin):
+        def __init__(self, id, email, display_name=None, role='personal'):
+            self.id = id
+            self.email = email
+            self.display_name = display_name or id
+            self.role = role
+
+        @property
+        def is_active(self):
+            user = app.extensions['mongo']['ficodb'].users.find_one({'_id': self.id})
+            return user.get('is_active', True) if user else False
+
+        def get_id(self):
+            return str(self.id)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        user = app.extensions['mongo']['ficodb'].users.find_one({'_id': user_id})
+        if not user:
+            return None
+        return User(
+            id=user['_id'],
+            email=user['email'],
+            display_name=user.get('display_name', user['_id']),
+            role=user.get('role', 'personal')
+        )
+
+    # Setup session
+    logger.info('Creating TTL index for sessions collection')
     app.extensions['mongo']['ficodb'].sessions.create_index("created_at", expireAfterSeconds=300)
     
     # Initialize data
     with app.app_context():
-        print("DEBUG: Starting initialize_app_data")
         initialize_app_data(app)
-        print("DEBUG: Finished initialize_app_data")
-        print("DEBUG: Starting initialize_tools_with_urls")
         utils.initialize_tools_with_urls(app)
-        print("DEBUG: Finished initialize_tools_with_urls")
         
         # Create indexes
         db = app.extensions['mongo']['ficodb']
@@ -228,149 +221,148 @@ def create_app():
                 {'_id': admin_username.lower()},
                 {'$set': {'password_hash': generate_password_hash(admin_password)}}
             )
-        print("DEBUG: Admin user setup complete")
-    
-    logger.info('MongoDB client initialized')  # Moved here to avoid early logging
+
+    # Register blueprints
+    app.register_blueprint(users_bp, url_prefix='/users')
+    app.register_blueprint(credits_bp, url_prefix='/credits')
+    app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
+    app.register_blueprint(reports_bp, url_prefix='/reports')
+    app.register_blueprint(settings_bp, url_prefix='/settings')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(bill_bp, url_prefix='/bill')
+    app.register_blueprint(budget_bp, url_prefix='/budget')
+    app.register_blueprint(summaries_bp, url_prefix='/summaries')
+    app.register_blueprint(shopping_bp, url_prefix='/shopping')
+    app.register_blueprint(general_bp, url_prefix='/general')
+
+    # Template filters and context processors
+    app.jinja_env.globals.update(
+        trans=utils.trans_function,
+        is_admin=utils.is_admin,
+        FACEBOOK_URL=app.config.get('FACEBOOK_URL', 'https://facebook.com/ficoreafrica'),
+        TWITTER_URL=app.config.get('TWITTER_URL', 'https://x.com/ficoreafrica'),
+        LINKEDIN_URL=app.config.get('LINKEDIN_URL', 'https://linkedin.com/company/ficoreafrica')
+    )
+
+    @app.template_filter('format_number')
+    def format_number(value):
+        try:
+            return f'{float(value):,.2f}' if isinstance(value, (int, float)) else str(value)
+        except (ValueError, TypeError):
+            return str(value)
+
+    @app.template_filter('format_datetime')
+    def format_datetime(value):
+        format_str = '%B %d, %Y, %I:%M %p' if session.get('lang', 'en') == 'en' else '%d %B %Y, %I:%M %p'
+        try:
+            if isinstance(value, datetime):
+                return value.strftime(format_str)
+            elif isinstance(value, str):
+                return datetime.strptime(value, '%Y-%m-%d').strftime(format_str)
+            return str(value)
+        except Exception:
+            return str(value)
+
+    @app.context_processor
+    def inject_globals():
+        lang = session.get('lang', 'en')
+        from flask_login import current_user
+        
+        # Get role-specific navigation and tools
+        if current_user.is_authenticated:
+            if current_user.role == 'personal':
+                tools_for_template = utils.PERSONAL_TOOLS
+                explore_features_for_template = utils.PERSONAL_EXPLORE_FEATURES
+                bottom_nav_items = utils.PERSONAL_NAV
+            elif current_user.role == 'admin':
+                tools_for_template = utils.ADMIN_TOOLS
+                explore_features_for_template = utils.ADMIN_EXPLORE_FEATURES
+                bottom_nav_items = utils.ADMIN_NAV
+            else:
+                tools_for_template = []
+                explore_features_for_template = []
+                bottom_nav_items = []
+        else:
+            tools_for_template = []
+            explore_features_for_template = utils.get_explore_features()
+            bottom_nav_items = []
+        
+        return {
+            'trans': utils.trans_function,
+            'current_lang': lang,
+            'available_languages': [
+                {'code': code, 'name': utils.trans_function(f'lang_{code}', lang=lang, default=code.capitalize())}
+                for code in app.config['SUPPORTED_LANGUAGES']
+            ],
+            'tools_for_template': tools_for_template,
+            'explore_features_for_template': explore_features_for_template,
+            'bottom_nav_items': bottom_nav_items
+        }
+
+    # Routes
+    @app.route('/')
+    @ensure_session_id
+    def index():
+        if current_user.is_authenticated:
+            if current_user.role == 'admin':
+                return redirect(url_for('dashboard.index'))
+            return redirect(url_for('bill_bp.home'))
+        return redirect(url_for('general_bp.landing'))
+
+    @app.route('/change-language', methods=['POST'])
+    def change_language():
+        data = request.get_json()
+        new_lang = data.get('language', 'en')
+        if new_lang in app.config['SUPPORTED_LANGUAGES']:
+            session['lang'] = new_lang
+            if current_user.is_authenticated:
+                app.extensions['mongo']['ficodb'].users.update_one(
+                    {'_id': current_user.id},
+                    {'$set': {'language': new_lang}}
+                )
+            return jsonify({'success': True, 'message': utils.trans_function('lang_change_success', lang=new_lang)})
+        return jsonify({'success': False, 'message': utils.trans_function('lang_invalid')}), 400
+
+    @app.route('/set-language/<lang>')
+    def set_language(lang):
+        """Set the session language."""
+        if lang in app.config['SUPPORTED_LANGUAGES']:
+            session['lang'] = lang
+            if current_user.is_authenticated:
+                app.extensions['mongo']['ficodb'].users.update_one(
+                    {'_id': current_user.id},
+                    {'$set': {'language': lang}}
+                )
+        return redirect(request.referrer or url_for('index'))
+
+    @app.route('/health')
+    def health():
+        try:
+            app.extensions['mongo'].admin.command('ping')
+            return jsonify({'status': 'healthy'}), 200
+        except Exception as e:
+            return jsonify({'status': 'unhealthy', 'dependencies': str(e)}), 500
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        return render_template(
+            'errors/403.html',
+            error=utils.trans_function('csrf_error'),
+            title=utils.trans_function('csrf_error', lang=session.get('lang', 'en'))
+        ), 400
+
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template(
+            'errors/404.html',
+            error=str(e),
+            title=utils.trans_function('not_found', lang=session.get('lang', 'en'))
+        ), 404
+
+    logger.info('MongoDB client initialized')
     return app
 
 app = create_app()
-
-# Register blueprints
-app.register_blueprint(users_bp, url_prefix='/users')
-app.register_blueprint(credits_bp, url_prefix='/credits')
-app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
-app.register_blueprint(reports_bp, url_prefix='/reports')
-app.register_blueprint(settings_bp, url_prefix='/settings')
-app.register_blueprint(admin_bp, url_prefix='/admin')
-app.register_blueprint(bill_bp, url_prefix='/bill')
-app.register_blueprint(budget_bp, url_prefix='/budget')
-app.register_blueprint(summaries_bp, url_prefix='/summaries')
-app.register_blueprint(shopping_bp, url_prefix='/shopping')
-app.register_blueprint(general_bp, url_prefix='/general')
-
-# Template filters and context processors
-app.jinja_env.globals.update(
-    trans=utils.trans_function,
-    is_admin=utils.is_admin,
-    FACEBOOK_URL=app.config.get('FACEBOOK_URL', 'https://facebook.com/ficoreafrica'),
-    TWITTER_URL=app.config.get('TWITTER_URL', 'https://x.com/ficoreafrica'),
-    LINKEDIN_URL=app.config.get('LINKEDIN_URL', 'https://linkedin.com/company/ficoreafrica')
-)
-
-@app.template_filter('format_number')
-def format_number(value):
-    try:
-        return f'{float(value):,.2f}' if isinstance(value, (int, float)) else str(value)
-    except (ValueError, TypeError):
-        return str(value)
-
-@app.template_filter('format_datetime')
-def format_datetime(value):
-    format_str = '%B %d, %Y, %I:%M %p' if session.get('lang', 'en') == 'en' else '%d %B %Y, %I:%M %p'
-    try:
-        if isinstance(value, datetime):
-            return value.strftime(format_str)
-        elif isinstance(value, str):
-            return datetime.strptime(value, '%Y-%m-%d').strftime(format_str)
-        return str(value)
-    except Exception:
-        return str(value)
-
-@app.context_processor
-def inject_globals():
-    lang = session.get('lang', 'en')
-    from flask_login import current_user
-    
-    # Get role-specific navigation and tools
-    if current_user.is_authenticated:
-        if current_user.role == 'personal':
-            tools_for_template = utils.PERSONAL_TOOLS
-            explore_features_for_template = utils.PERSONAL_EXPLORE_FEATURES
-            bottom_nav_items = utils.PERSONAL_NAV
-        elif current_user.role == 'admin':
-            tools_for_template = utils.ADMIN_TOOLS
-            explore_features_for_template = utils.ADMIN_EXPLORE_FEATURES
-            bottom_nav_items = utils.ADMIN_NAV
-        else:
-            tools_for_template = []
-            explore_features_for_template = []
-            bottom_nav_items = []
-    else:
-        tools_for_template = []
-        explore_features_for_template = utils.get_explore_features()
-        bottom_nav_items = []
-    
-    return {
-        'trans': utils.trans_function,
-        'current_lang': lang,
-        'available_languages': [
-            {'code': code, 'name': utils.trans_function(f'lang_{code}', lang=lang, default=code.capitalize())}
-            for code in app.config['SUPPORTED_LANGUAGES']
-        ],
-        'tools_for_template': tools_for_template,
-        'explore_features_for_template': explore_features_for_template,
-        'bottom_nav_items': bottom_nav_items
-    }
-
-# Routes
-@app.route('/')
-@ensure_session_id
-def index():
-    if current_user.is_authenticated:
-        if current_user.role == 'admin':
-            return redirect(url_for('dashboard.index'))
-        return redirect(url_for('bill_bp.home'))
-    return redirect(url_for('general_bp.landing'))
-
-@app.route('/change-language', methods=['POST'])
-def change_language():
-    data = request.get_json()
-    new_lang = data.get('language', 'en')
-    if new_lang in app.config['SUPPORTED_LANGUAGES']:
-        session['lang'] = new_lang
-        if current_user.is_authenticated:
-            app.extensions['mongo']['ficodb'].users.update_one(
-                {'_id': current_user.id},
-                {'$set': {'language': new_lang}}
-            )
-        return jsonify({'success': True, 'message': utils.trans_function('lang_change_success', lang=new_lang)})
-    return jsonify({'success': False, 'message': utils.trans_function('lang_invalid')}), 400
-
-@app.route('/set-language/<lang>')
-def set_language(lang):
-    """Set the session language."""
-    if lang in app.config['SUPPORTED_LANGUAGES']:
-        session['lang'] = lang
-        if current_user.is_authenticated:
-            app.extensions['mongo']['ficodb'].users.update_one(
-                {'_id': current_user.id},
-                {'$set': {'language': lang}}
-            )
-    return redirect(request.referrer or url_for('index'))
-
-@app.route('/health')
-def health():
-    try:
-        app.extensions['mongo'].admin.command('ping')
-        return jsonify({'status': 'healthy'}), 200
-    except Exception as e:
-        return jsonify({'status': 'unhealthy', 'details': str(e)}), 500
-
-@app.errorhandler(CSRFError)
-def handle_csrf_error(e):
-    return render_template(
-        'errors/403.html',
-        error=utils.trans_function('csrf_error'),
-        title=utils.trans_function('csrf_error', lang=session.get('lang', 'en'))
-    ), 400
-
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template(
-        'errors/404.html',
-        error=str(e),
-        title=utils.trans_function('not_found', lang=session.get('lang', 'en'))
-    ), 404
 
 if __name__ == '__main__':
     logger.info('Starting Flask application')
