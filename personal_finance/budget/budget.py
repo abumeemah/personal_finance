@@ -16,7 +16,7 @@ import uuid
 budget_bp = Blueprint(
     'budget',
     __name__,
-    template_folder='templates/personal/BUDGET',
+    template_folder='templates/',
     url_prefix='/budget'
 )
 
