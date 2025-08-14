@@ -376,9 +376,8 @@ def signup():
         try:
             username = form.username.data.strip().lower()
             email = form.email.data.strip().lower()
-            language = form.language.data
             logger.debug(f"Signup attempt: {username}, {email}, session_id: {session.get('session_id')}")
-            logger.info(f"Signup attempt: username={username}, email={email}, language={language}")
+            logger.info(f"Signup attempt: username={username}, email={email}")
 
             db = utils.get_mongo_db()
 
@@ -396,9 +395,9 @@ def signup():
                 '_id': username,
                 'email': email,
                 'password': form.password.data,  # create_user will hash this
-                'role': 'personal',
+                'role': 'personal',  # Hardcode role as personal
                 'ficore_credit_balance': 10.0,
-                'language': language,
+                'language': 'en',  # Default language
                 'dark_mode': False,
                 'is_admin': False,
                 'setup_complete': False,
@@ -426,7 +425,7 @@ def signup():
             from app import User
             user_obj = User(username, email, username, 'personal')
             login_user(user_obj, remember=True)
-            session['lang'] = language
+            session['lang'] = 'en'  # Set default language in session
             session.pop('is_anonymous', None)
             session['is_anonymous'] = False
             logger.info(f"New user created and logged in: {username} (role: personal). Session: {dict(session)}")
