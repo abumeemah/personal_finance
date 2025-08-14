@@ -43,15 +43,28 @@ def initialize_app_data(app):
             
             # Define collection schemas for bill, shopping, and budget
             collection_schemas = {
-                # ADDED THE NEW SCHEMA FOR USERS HERE
+                # UPDATED THE USER SCHEMA TO HANDLE THE ADMIN USER EXCEPTION
                 'users': {
                     'validator': {
                         '$jsonSchema': {
                             'bsonType': 'object',
-                            'required': ['user_id', 'ficore_credit_balance'],
-                            'properties': {
-                                'user_id': {'bsonType': 'string'},
-                                'ficore_credit_balance': {'bsonType': 'double', 'minimum': 0}
+                            'if': {
+                                'properties': {
+                                    '_id': {'enum': ['admin']}
+                                }
+                            },
+                            'then': {
+                                # Admin user does not need to follow the same validation rules.
+                                # The document is considered valid if the '_id' is 'admin'.
+                                'bsonType': 'object'
+                            },
+                            'else': {
+                                'bsonType': 'object',
+                                'required': ['user_id', 'ficore_credit_balance'],
+                                'properties': {
+                                    'user_id': {'bsonType': 'string'},
+                                    'ficore_credit_balance': {'bsonType': 'double', 'minimum': 0}
+                                }
                             }
                         }
                     },
