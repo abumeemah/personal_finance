@@ -58,11 +58,11 @@
         <section class="personal-section-card personal-quick-actions-grid">
             <h3 class="personal-section-title visually-hidden">{{ t('plan_your_spending_quick_actions', default='Quick Actions') }}</h3>
             <div class="personal-actions-grid">
-                <a href="{{ url_for('personal.shopping.main', _external=True) | e }}" class="personal-quick-action-item personal-shopping-management text-decoration-none" aria-label="{{ t('shopping', default='Shopping') | e }}">
+                <a href="{{ url_for('personal.budget.main', _external=True) | e }}" class="personal-quick-action-item personal-budget-management text-decoration-none" aria-label="{{ t('budget', default='Budget') | e }}">
                     <div class="personal-action-icon-wrapper">
-                        <i class="bi bi-cart personal-action-icon"></i>
+                        <i class="bi bi-pie-chart personal-action-icon"></i>
                     </div>
-                    <div class="personal-action-label">{{ t('shopping', default='Shopping') }}</div>
+                    <div class="personal-action-label">{{ t('budget', default='Budget') }}</div>
                 </a>
                 <a href="{{ url_for('personal.bill.main', _external=True) | e }}" class="personal-quick-action-item personal-bills-management text-decoration-none" aria-label="{{ t('bills', default='Bills') | e }}">
                     <div class="personal-action-icon-wrapper">
@@ -70,11 +70,11 @@
                     </div>
                     <div class="personal-action-label">{{ t('bills', default='Bills') }}</div>
                 </a>
-                <a href="{{ url_for('credits.history', _external=True) | e }}" class="personal-quick-action-item personal-wallet-history-action text-decoration-none" aria-label="{{ t('credits_your_wallet', default='View Wallet') | e }}">
+                <a href="{{ url_for('personal.shopping.main', _external=True) | e }}" class="personal-quick-action-item personal-shopping-management text-decoration-none" aria-label="{{ t('shopping', default='Shopping') | e }}">
                     <div class="personal-action-icon-wrapper">
-                        <i class="bi bi-wallet2 personal-action-icon"></i>
+                        <i class="bi bi-cart personal-action-icon"></i>
                     </div>
-                    <div class="personal-action-label">{{ t('view_wallet', default='Wallet') }}</div>
+                    <div class="personal-action-label">{{ t('shopping', default='Shopping') }}</div>
                 </a>
             </div>
         </section>
@@ -118,13 +118,16 @@
         <section class="personal-section-card personal-services-grid-section">
             <h3 class="personal-section-title">{{ t('explore_features', default='Bincika Abubuwan Haɗin') }}</h3>
             <div class="personal-services-grid">
+                {% set allowed_features = ['Budget', 'Bills', 'Shopping'] %}
                 {% for feature in explore_features_for_template %}
+                    {% if feature.label in allowed_features %}
                     <a href="{{ feature.url | e }}" class="personal-service-grid-item text-decoration-none" aria-label="{{ t(feature.label_key, default=feature.label) | e }}">
                         <div class="personal-service-icon-wrapper">
                             <i class="bi {{ feature.icon | e }}"></i>
                         </div>
                         <div class="personal-service-label">{{ t(feature.label_key, default=feature.label) | e }}</div>
                     </a>
+                    {% endif %}
                 {% endfor %}
             </div>
         </section>
@@ -255,7 +258,7 @@ function loadFinancialSummary() {
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                console.error('shopping summary error:', data.error);
+                console.error('Shopping summary error:', data.error);
                 return;
             }
             const shoppingSpending = document.getElementById('shoppingSpending');
@@ -319,18 +322,20 @@ function loadRecentActivity() {
                 (activity.description || activity.description_key) &&
                 activity.icon &&
                 activity.type &&
-                activity.timestamp
+                activity.timestamp &&
+                ['budget', 'bill', 'shopping'].includes(activity.type.toLowerCase())
             );
 
             if (validActivities.length < activities.length) {
-                console.warn(`Filtered out ${activities.length - validActivities.length} invalid activities`, {
+                console.warn(`Filtered out ${activities.length - validActivities.length} invalid or non-personal finance activities`, {
                     invalid: activities.filter(a => !(
                         a && 
                         typeof a === 'object' &&
                         (a.description || a.description_key) &&
                         a.icon &&
                         a.type &&
-                        a.timestamp
+                        a.timestamp &&
+                        ['budget', 'bill', 'shopping'].includes(a.type.toLowerCase())
                     ))
                 });
             }
