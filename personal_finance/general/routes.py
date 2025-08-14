@@ -45,8 +45,8 @@ def landing():
 @general_bp.route('/home')
 @login_required
 def home():
-    """Trader homepage."""
-    if current_user.role not in ['trader', 'admin']:
+    """Personal homepage."""
+    if current_user.role not in ['personal', 'admin']:
         flash(trans('general_access_denied', default='You do not have permission to access this page.'), 'danger')
         return redirect(url_for('index'))
     
@@ -196,5 +196,6 @@ def feedback():
                 return render_template('general/error.html', error=str(e), title=trans('general_feedback', lang=lang)), 500
     # Handle GET request
     return render_template('general/feedback.html', tool_options=tool_options, title=trans('general_feedback', lang=lang))
+
 
 
