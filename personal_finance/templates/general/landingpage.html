@@ -135,7 +135,7 @@
     <!-- Why FiCore -->
     <div class="section-card why-section mt-5">
         <h2 class="section-title text-center"><i class="bi bi-info-circle-fill me-2 text-primary"></i>{{ t('general_why_ficore', default='Why FiCore Africa?') | e }}</h2>
-        <p class="text-center text-muted mb-4">{{ t('general_ficore_highlight', default='Africa’s #1 Localized Personal Finance Platform') | e }}</p>
+        <p class="text-center text-muted mb-4">{{ t('general_ficore_highlight', default='Africa's #1 Localized Personal Finance Platform') | e }}</p>
         <div class="row row-cols-1 row-cols-md-4 g-4">
             <div class="col">
                 <div class="why-item text-center">
@@ -165,7 +165,7 @@
                 <div class="why-item text-center">
                     <p class="text-muted">
                         <span class="text-success fw-bold me-1">✓</span>
-                        {{ t('general_secure', default='Advisory-only – we don’t access your funds') | e }}
+                        {{ t('general_secure', default='Advisory-only – we don't access your funds') | e }}
                     </p>
                 </div>
             </div>
@@ -184,7 +184,7 @@
                 <div class="carousel-item active">
                     <div class="testimonial text-center">
                         <img src="{{ url_for('static', filename='img/default_avatar.png') | e }}" alt="{{ t('general_testimonial_avatar', default='User Avatar') | e }}" class="avatar-circle gradient-bg mx-auto mb-3" data-initials="MU">
-                        <p class="text-muted">{{ t('general_impressed_features', default='FiCore’s budgeting and bill tracking tools are intuitive and perfect for managing my personal finances!') | e }}</p>
+                        <p class="text-muted">{{ t('general_impressed_features', default='FiCore's budgeting and bill tracking tools are intuitive and perfect for managing my personal finances!') | e }}</p>
                         <p class="name fw-bold">User, {{ t('general_personal_user', default='Personal User') | e }}</p>
                     </div>
                 </div>
@@ -263,7 +263,7 @@
                 </h3>
                 <div id="collapseGetMoreFCs" class="accordion-collapse collapse" aria-labelledby="faqGetMoreFCs" data-bs-parent="#faqAccordion">
                     <div class="accordion-body">
-                        {{ t('general_faq_get_more_fcs_answer', default='You can add more FCs through your FiCore Wallet using available payment options. Look for the “Get More FCs” button in your dashboard.') | e }}
+                        {{ t('general_faq_get_more_fcs_answer', default='You can add more FCs through your FiCore Wallet using available payment options. Look for the "Get More FCs" button in your dashboard.') | e }}
                     </div>
                 </div>
             </div>
@@ -388,6 +388,7 @@
     z-index: 1000; /* Lower than navbar (z-index: 1020) */
 }
 </style>
+{% endblock %}
 
 {% block extra_scripts %}
 {% set translations = {
