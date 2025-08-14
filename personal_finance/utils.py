@@ -254,7 +254,7 @@ def get_explore_features():
             features = [
                 {
                     "endpoint": "budget.main",
-                    "label": "Budget Planner",
+                    "label": "Budget",
                     "label_key": "budget_budget_planner",
                     "description_key": "budget_budget_desc",
                     "tooltip_key": "budget_tooltip",
