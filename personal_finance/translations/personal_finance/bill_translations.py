@@ -20,7 +20,7 @@ BILL_TRANSLATIONS = {
         'bill_bill_name_placeholder': 'e.g., NEPA, MTN Data, Ajo Contribution',
         'bill_amount_required': 'Bill amount is required',
         'bill_reminder_days_invalid_range': 'Reminder days must be between 1 and 30',
-        'bill_bill_desc': 'Description of the bill',
+        'bill_bill_desc': 'Manage your bills',
         'bill_bill_name_required': 'Bill name is required',
         'bill_amount': 'Amount',
         'bill_amount_placeholder': 'e.g., 5000.00',
