@@ -6,7 +6,7 @@
     <!-- Welcome Section - Streamlined -->
     <div class="section-card welcome-section-card text-center">
         <h1 class="section-title">{{ t('general_welcome', default='Welcome to FiCore Africa') | e }}</h1>
-        <p class="text-muted">{{ t('general_ficore_desc', default='Africa\'s leading platform for personal finance, business management, and agent services, tailored for you.') | e }}</p>
+        <p class="text-muted">{{ t('general_ficore_desc', default='Africa\'s leading platform for personal finance, tailored for you.') | e }}</p>
         
         <!-- Initial Get Started Button -->
         <div id="initial-cta" class="mb-3">
@@ -51,34 +51,14 @@
     <!-- Who We Serve -->
     <div class="section-card mt-5">
         <h3 class="section-title">{{ t('general_who_we_serve', default='Who We Serve') | e }}</h3>
-        <p class="text-muted">{{ t('general_who_we_serve_desc', default='FiCore empowers individuals, businesses, and agents with tailored financial tools.') | e }}</p>
+        <p class="text-muted">{{ t('general_who_we_serve_desc', default='FiCore empowers individuals with tailored personal finance tools.') | e }}</p>
         <div class="row">
             <div class="col-md-4">
                 <a href="{{ url_for('users.signup') }}" class="tool-card-link">
                     <div class="card mb-3">
                         <div class="card-body">
                             <h5>{{ t('general_personal', default='Personal Users') | e }}</h5>
-                            <p>{{ t('general_personal_desc', default='Plan budgets and track bills with ease.') | e }}</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-4">
-                <a href="{{ url_for('users.signup') }}" class="tool-card-link">
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5>{{ t('general_trader', default='Business Owners') | e }}</h5>
-                            <p>{{ t('general_trader_desc', default='Streamline debtors, creditors, and financial reports.') | e }}</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-4">
-                <a href="{{ url_for('users.signup') }}" class="tool-card-link">
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5>{{ t('general_agent', default='Agents') | e }}</h5>
-                            <p>{{ t('general_agent_desc', default='Onboard traders and manage tokens effortlessly.') | e }}</p>
+                            <p>{{ t('general_personal_desc', default='Plan budgets, track bills, and manage shopping with ease.') | e }}</p>
                         </div>
                     </div>
                 </a>
@@ -89,15 +69,16 @@
     <!-- Explore Our Tools (Unauthenticated) -->
     <div class="section-card mt-5">
         <h3 class="section-title">{{ t('general_our_tools', default='Explore Our Tools') | e }}</h3>
-        <p class="text-muted">{{ t('general_tools_desc', default='Powerful tools to manage your finances effectively.') | e }}</p>
+        <p class="text-muted">{{ t('general_tools_desc', default='Powerful tools to manage your personal finances effectively.') | e }}</p>
         {% if explore_features_for_template %}
-            {% set categories = ['Personal', 'Business', 'Agent'] %}
+            {% set categories = ['Personal'] %}
             {% for category in categories %}
                 {% set category_tools = explore_features_for_template | selectattr('category', 'equalto', category) | list %}
                 {% if category_tools %}
                     <h4>{{ t('general_' + category | lower + '_tools', default=category + ' Tools') | e }}</h4>
                     <div class="row">
                         {% for tool in category_tools %}
+                            {% if tool.get('label') in ['Budget', 'Bills', 'Shopping'] %}
                             <div class="col-md-4 mb-3">
                                 <a href="{{ tool.get('url', url_for('users.login')) }}" class="tool-card-link">
                                     <div class="card">
@@ -108,6 +89,7 @@
                                     </div>
                                 </a>
                             </div>
+                            {% endif %}
                         {% endfor %}
                     </div>
                 {% endif %}
@@ -123,7 +105,7 @@
     <!-- Why FiCore -->
     <div class="section-card why-section mt-5">
         <h2 class="section-title text-center"><i class="bi bi-info-circle-fill me-2 text-primary"></i>{{ t('general_why_ficore', default='Why FiCore Africa?') | e }}</h2>
-        <p class="text-center text-muted mb-4">{{ t('general_ficore_highlight', default='Africa’s #1 Localized Financial Management Platform') | e }}</p>
+        <p class="text-center text-muted mb-4">{{ t('general_ficore_highlight', default='Africa’s #1 Localized Personal Finance Platform') | e }}</p>
         <div class="row row-cols-1 row-cols-md-4 g-4">
             <div class="col">
                 <div class="why-item text-center">
@@ -137,7 +119,7 @@
                 <div class="why-item text-center">
                     <p class="text-muted">
                         <span class="text-success fw-bold me-1">✓</span>
-                        {{ t('general_empowers', default='Empowers individuals, businesses, and agents') | e }}
+                        {{ t('general_empowers', default='Empowers individuals with personal finance tools') | e }}
                     </p>
                 </div>
             </div>
@@ -145,7 +127,7 @@
                 <div class="why-item text-center">
                     <p class="text-muted">
                         <span class="text-success fw-bold me-1">✓</span>
-                        {{ t('general_actionable', default='Actionable insights for smarter decisions') | e }}
+                        {{ t('general_actionable', default='Actionable insights for smarter financial decisions') | e }}
                     </p>
                 </div>
             </div>
@@ -174,20 +156,6 @@
                         <img src="{{ url_for('static', filename='img/default_avatar.png') | e }}" alt="{{ t('general_testimonial_avatar', default='User Avatar') | e }}" class="avatar-circle gradient-bg mx-auto mb-3" data-initials="MU">
                         <p class="text-muted">{{ t('general_impressed_features', default='FiCore’s budgeting and bill tracking tools are intuitive and perfect for managing my personal finances!') | e }}</p>
                         <p class="name fw-bold">User, {{ t('general_personal_user', default='Personal User') | e }}</p>
-                    </div>
-                </div>
-                <div class="carousel-item">
-                    <div class="testimonial text-center">
-                        <img src="{{ url_for('static', filename='img/default_avatar.png') | e }}" alt="{{ t('general_testimonial_avatar', default='User Avatar') | e }}" class="avatar-circle gradient-bg mx-auto mb-3" data-initials="AA">
-                        <p class="text-muted">{{ t('general_ficore_praise', default='Managing my business’s debtors, creditors, and reports has never been easier!') | e }}</p>
-                        <p class="name fw-bold">User, {{ t('general_business_owner', default='Business Owner') | e }}</p>
-                    </div>
-                </div>
-                <div class="carousel-item">
-                    <div class="testimonial text-center">
-                        <img src="{{ url_for('static', filename='img/default_avatar.png') | e }}" alt="{{ t('general_testimonial_avatar', default='User Avatar') | e }}" class="avatar-circle gradient-bg mx-auto mb-3" data-initials="ASU">
-                        <p class="text-muted">{{ t('general_potential_support', default='As an agent, FiCore makes onboarding traders and managing tokens seamless and efficient.') | e }}</p>
-                        <p class="name fw-bold">User, {{ t('general_agent', default='Agent') | e }}</p>
                     </div>
                 </div>
             </div>
@@ -229,19 +197,7 @@
                 </h3>
                 <div id="collapseRoles" class="accordion-collapse collapse" aria-labelledby="faqRoles" data-bs-parent="#faqAccordion">
                     <div class="accordion-body">
-                        {{ t('general_faq_roles_answer', default='FiCore supports personal users with budgeting and bill tracking tools, business owners with debtor, creditor, and report management, and agents with trader onboarding and token management.') | e }}
-                    </div>
-                </div>
-            </div>
-            <div class="accordion-item">
-                <h3 class="accordion-header" id="faqBusinessAgent">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBusinessAgent" aria-expanded="false" aria-controls="collapseBusinessAgent">
-                        {{ t('general_faq_business_agent', default='How does FiCore support businesses and agents?') | e }}
-                    </button>
-                </h3>
-                <div id="collapseBusinessAgent" class="accordion-collapse collapse" aria-labelledby="faqBusinessAgent" data-bs-parent="#faqAccordion">
-                    <div class="accordion-body">
-                        {{ t('general_faq_business_agent_answer', default='Business owners can track debtors, creditors, and generate reports, while agents can register traders and manage tokens. Sign up to explore these tools.') | e }}
+                        {{ t('general_faq_roles_answer', default='FiCore supports personal users with budgeting, bill tracking, and shopping management tools.') | e }}
                     </div>
                 </div>
             </div>
@@ -253,7 +209,7 @@
                 </h3>
                 <div id="collapseFiCoreCredits" class="accordion-collapse collapse" aria-labelledby="faqFiCoreCredits" data-bs-parent="#faqAccordion">
                     <div class="accordion-body">
-                        {{ t('general_faq_ficore_credits_answer', default='FCs are in-app points used to access certain features on the FiCore platform, like adding debt records, generating reports, or sending reminders. They are not money or cryptocurrency.') | e }}
+                        {{ t('general_faq_ficore_credits_answer', default='FCs are in-app points used to access certain features on the FiCore platform, like creating budgets or tracking bills. They are not money or cryptocurrency.') | e }}
                     </div>
                 </div>
             </div>
@@ -289,7 +245,7 @@
                 </h3>
                 <div id="collapseUseFCs" class="accordion-collapse collapse" aria-labelledby="faqUseFCs" data-bs-parent="#faqAccordion">
                     <div class="accordion-body">
-                        {{ t('general_faq_use_fcs_answer', default='FCs are used for actions like adding debtors, creating budgets, sending reminders, tracking payments, and generating reports.') | e }}
+                        {{ t('general_faq_use_fcs_answer', default='FCs are used for actions like creating budgets, tracking bills, and managing shopping lists.') | e }}
                     </div>
                 </div>
             </div>
@@ -319,7 +275,7 @@
             </div>
             <div class="accordion-item">
                 <h3 class="accordion-header" id="faqFCsRegulated">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFCsRegulated" aria-expanded="false" aria-controls="collapseFCsRegulated">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFCsRegulated" aria-expanded="false" aria-controls="faqFCsRegulated">
                         {{ t('general_faq_fcs_regulated', default='Are FCs regulated or considered money?') | e }}
                     </button>
                 </h3>
@@ -335,12 +291,10 @@
     <!-- Call to Action -->
     <div class="section-card mt-5 text-center">
         <h3 class="section-title">{{ t('general_ready_to_start', default='Ready to Take Control of Your Finances?') | e }}</h3>
-        <p class="text-muted">{{ t('general_signup_prompt', default='Sign up today to access tools for personal finance, business management, or agent services.') | e }}</p>
+        <p class="text-muted">{{ t('general_signup_prompt', default='Sign up today to access tools for personal finance.') | e }}</p>
         <div class="btn-group btn-group-vertical d-md-flex mb-3">
             <a href="{{ url_for('users.signup') }}" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-title="{{ t('general_get_started_tooltip', default='Start your financial journey') | e }}">{{ t('general_get_started', default='Get Started') | e }}</a>
             <a href="{{ url_for('users.signup') }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" data-bs-title="{{ t('general_signup_personal_tooltip', default='Sign up for personal finance tools') | e }}">{{ t('general_signup_personal', default='Personal Sign Up') | e }}</a>
-            <a href="{{ url_for('users.signup') }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" data-bs-title="{{ t('general_signup_business_tooltip', default='Sign up for business management tools') | e }}">{{ t('general_signup_business', default='Business Sign Up') | e }}</a>
-            <a href="{{ url_for('users.signup') }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" data-bs-title="{{ t('general_signup_agent_tooltip', default='Sign up for agent services') | e }}">{{ t('general_signup_agent', default='Agent Sign Up') | e }}</a>
             <a href="{{ url_for('users.login') }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" data-bs-title="{{ t('general_login_tooltip', default='Log in to your account') | e }}">{{ t('general_login', default='Log In') | e }}</a>
         </div>
     </div>
