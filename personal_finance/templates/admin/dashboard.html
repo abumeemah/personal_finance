@@ -1,139 +1,92 @@
 {% extends "base.html" %}
-{% block title %}
-{{ t('admin_dashboard', default='Admin Dashboard') | escape }} - FiCore
-{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 {% block content %}
 <div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>{{ t('admin_dashboard', default='Admin Dashboard') | escape }}</h1>
-        <a href="{{ url_for('users.logout') }}" class="btn btn-danger btn-lg">
-            {{ t('general_logout', default='Logout') | escape }}
-        </a>
-    </div>
-    <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
-        <div class="col">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="card-title">{{ t('general_users', default='Users') | escape }}</h2>
-                    <p class="card-text fs-3">{{ stats.users }}</p>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('general_bp.home') }}">{{ t('general_home', default='Home') }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ t('admin_dashboard', default='Admin Dashboard') }}</li>
+        </ol>
+    </nav>
+
+    <h2>{{ t('admin_dashboard', default='Admin Dashboard') }}</h2>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ t('admin_users', default='Users') }}</h5>
+                    <p class="card-text h3">{{ stats.users }}</p>
                 </div>
             </div>
         </div>
-        <div class="col">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="card-title">{{ t('general_records', default='Records') | escape }}</h2>
-                    <p class="card-text fs-3">{{ stats.records }}</p>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ t('admin_budgets', default='Budgets') }}</h5>
+                    <p class="card-text h3">{{ stats.budgets }}</p>
                 </div>
             </div>
         </div>
-        <div class="col">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="card-title">{{ t('general_cashflows', default='Cashflows') | escape }}</h2>
-                    <p class="card-text fs-3">{{ stats.cashflows }}</p>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ t('admin_bills', default='Bills') }}</h5>
+                    <p class="card-text h3">{{ stats.bills }}</p>
                 </div>
             </div>
         </div>
-        <div class="col">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="card-title">{{ t('credits_transactions', default='Ficore Credits Transactions') | escape }}</h2>
-                    <p class="card-text fs-3">{{ stats.credit_transactions }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="card-title">{{ t('admin_audit_logs', default='Audit Logs') | escape }}</h2>
-                    <p class="card-text fs-3">{{ stats.audit_logs }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="card-title">{{ t('budgets_title', default='Budgets') | escape }}</h2>
-                    <p class="card-text fs-3">{{ stats.budgets }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="card-title">{{ t('bills_title', default='Bills') | escape }}</h2>
-                    <p class="card-text fs-3">{{ stats.bills }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="card-title">{{ t('payment_locations_title', default='Payment Locations') | escape }}</h2>
-                    <p class="card-text fs-3">{{ stats.payment_locations }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="card-title">{{ t('tax_deadlines_title', default='Tax Deadlines') | escape }}</h2>
-                    <p class="card-text fs-3">{{ stats.tax_deadlines }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="card-title">{{ t('log_tool_usage', default='Log Tool Usage') | escape }}</h2>
-                    <p class="card-text fs-3">{{ tool_usage.get('audit_logs', 0) }}</p>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ t('admin_shopping_lists', default='Shopping Lists') }}</h5>
+                    <p class="card-text h3">{{ stats.shopping_lists }}</p>
                 </div>
             </div>
         </div>
     </div>
-    <div class="d-flex gap-2 mb-4 flex-wrap">
-        <a href="{{ url_for('agents_bp.created_traders') }}" class="btn btn-primary">{{ t('admin_view_created_traders', default='View Created Traders') | escape }}</a>
-        <a href="{{ url_for('admin.manage_users') }}" class="btn btn-primary">{{ t('admin_manage_users', default='Manage Users') | escape }}</a>
-        <a href="{{ url_for('admin.view_credit_requests') }}" class="btn btn-primary">{{ t('admin_view_credit_requests', default='View Credit Requests') | escape }}</a>
-        <a href="{{ url_for('admin.audit') }}" class="btn btn-primary">{{ t('admin_view_audit_logs', default='View Audit Logs') | escape }}</a>
-        <a href="{{ url_for('admin.manage_agents') }}" class="btn btn-primary">{{ t('admin_manage_agents', default='Manage Agents') | escape }}</a>
-        <a href="{{ url_for('admin.manage_tax_rates') }}" class="btn btn-primary">{{ t('admin_manage_tax_rates', default='Manage Tax Rates') | escape }}</a>
-        <a href="{{ url_for('admin.manage_payment_locations') }}" class="btn btn-primary">{{ t('admin_manage_payment_locations', default='Manage Payment Locations') | escape }}</a>
-        <a href="{{ url_for('admin.manage_tax_deadlines') }}" class="btn btn-primary">{{ t('admin_manage_tax_deadlines', default='Manage Tax Deadlines') | escape }}</a>
-        <a href="{{ url_for('admin.customer_reports') }}" class="btn btn-primary">{{ t('admin_customer_reports', default='Customer Reports') | escape }}</a>
-        <a href="{{ url_for('admin.manage_user_roles') }}" class="btn btn-primary">{{ t('admin_manage_user_roles', default='Manage User Roles') | escape }}</a>
-        <a href="{{ url_for('admin.admin_budgets') }}" class="btn btn-primary">{{ t('admin_manage_budgets', default='Manage Budgets') | escape }}</a>
-        <a href="{{ url_for('admin.admin_bills') }}" class="btn btn-primary">{{ t('admin_manage_bills', default='Manage Bills') | escape }}</a>
-        <a href="{{ url_for('admin.view_feedbacks') }}" class="btn btn-primary">{{ t('admin_view_feedbacks', default='View Feedbacks') | escape }}</a>
-        <a href="{{ url_for('admin.generate_agent_ids') }}" class="btn btn-primary">{{ t('admin_generate_agent_ids', default='Generate Agent IDs') | escape }}</a>
-    </div>
-    <h2 class="mb-3">{{ t('admin_recent_users', default='Recent Users') | escape }}</h2>
-    {% if recent_users %}
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-                <thead class="table-light">
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">{{ t('admin_recent_users', default='Recent Users') }}</h5>
+        </div>
+        <div class="card-body">
+            {% if recent_users %}
+            <table class="table table-striped">
+                <thead>
                     <tr>
-                        <th>{{ t('general_username', default='Username') | escape }}</th>
-                        <th>{{ t('general_email', default='Email') | escape }}</th>
-                        <th>{{ t('general_role', default='Role') | escape }}</th>
-                        <th>{{ t('general_created_at', default='Created At') | escape }}</th>
+                        <th>{{ t('admin_username', default='Username') }}</th>
+                        <th>{{ t('admin_email', default='Email') }}</th>
+                        <th>{{ t('user_role', default='Role') }}</th>
+                        <th>{{ t('admin_created_at', default='Created At') }}</th>
+                        <th>{{ t('ficore_credit_balance', default='Ficore Credit Balance') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user in recent_users %}
-                        <tr>
-                            <td>{{ user._id | escape }}</td>
-                            <td>{{ user.email | escape }}</td>
-                            <td>{{ t('general_' + user.role, default=user.role.capitalize()) | escape }}</td>
-                            <td>{{ user.created_at | format_date | escape }}</td>
-                        </tr>
+                    <tr>
+                        <td>{{ user._id }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.role }}</td>
+                        <td>{{ user.created_at | format_date }}</td>
+                        <td>{{ user.ficore_credit_balance }}</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            {% else %}
+            <p>{{ t('admin_no_users', default='No recent users found.') }}</p>
+            {% endif %}
         </div>
-    {% else %}
-        <p class="text-muted">{{ t('admin_no_users', default='No users found') | escape }}</p>
-    {% endif %}
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">{{ t('admin_tool_usage', default='Tool Usage') }}</h5>
+        </div>
+        <div class="card-body">
+            <p>{{ t('admin_audit_logs_accessed', default='Audit Logs Accessed') }}: {{ tool_usage.audit_logs }}</p>
+        </div>
+    </div>
 </div>
 {% endblock %}
