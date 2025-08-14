@@ -43,28 +43,15 @@ def initialize_app_data(app):
             
             # Define collection schemas for bill, shopping, and budget
             collection_schemas = {
-                # UPDATED THE USER SCHEMA TO HANDLE THE ADMIN USER EXCEPTION
+                # SIMPLIFIED THE USER SCHEMA FOR MONGO DB VERSIONS < 4.2
                 'users': {
                     'validator': {
                         '$jsonSchema': {
                             'bsonType': 'object',
-                            'if': {
-                                'properties': {
-                                    '_id': {'enum': ['admin']}
-                                }
-                            },
-                            'then': {
-                                # Admin user does not need to follow the same validation rules.
-                                # The document is considered valid if the '_id' is 'admin'.
-                                'bsonType': 'object'
-                            },
-                            'else': {
-                                'bsonType': 'object',
-                                'required': ['user_id', 'ficore_credit_balance'],
-                                'properties': {
-                                    'user_id': {'bsonType': 'string'},
-                                    'ficore_credit_balance': {'bsonType': 'double', 'minimum': 0}
-                                }
+                            'properties': {
+                                '_id': {'bsonType': 'string'},
+                                'user_id': {'bsonType': 'string'},
+                                'ficore_credit_balance': {'bsonType': 'double', 'minimum': 0}
                             }
                         }
                     },
