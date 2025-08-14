@@ -391,18 +391,18 @@
 {% endblock %}
 
 {% block extra_scripts %}
-{% set translations = {
-    'just_now': t('general_just_now', default='Just now'),
-    'minutes_ago': t('general_minutes_ago', default='m ago'),
-    'hours_ago': t('general_hours_ago', default='h ago'),
-    'days_ago': t('general_days_ago', default='d ago'),
-    'no_notifications': t('general_no_notifications', default='No notifications'),
-    'check_back_later': t('general_check_back_later', default='Check back later')
-} %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Debug translations JSON
-    const translations = {{ translations | tojson }};
+    // Define translations object safely
+    const translations = {
+        'just_now': '{{ t("general_just_now", default="Just now") | e | replace("'", "\\'") }}',
+        'minutes_ago': '{{ t("general_minutes_ago", default="m ago") | e | replace("'", "\\'") }}',
+        'hours_ago': '{{ t("general_hours_ago", default="h ago") | e | replace("'", "\\'") }}',
+        'days_ago': '{{ t("general_days_ago", default="d ago") | e | replace("'", "\\'") }}',
+        'no_notifications': '{{ t("general_no_notifications", default="No notifications") | e | replace("'", "\\'") }}',
+        'check_back_later': '{{ t("general_check_back_later", default="Check back later") | e | replace("'", "\\'") }}'
+    };
+
     console.log('Rendered translations:', translations);
 
     // Initialize tooltips with explicit touch handling
@@ -477,17 +477,17 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.warn('Navbar toggler or collapse element not found');
     }
-});
 
-function formatTimeAgo(timestamp) {
-    const translations = {{ translations | tojson }};
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffInSeconds = Math.floor((now - time) / 1000);
-    if (diffInSeconds < 60) return translations.just_now;
-    if (diffInSeconds < 3600) return Math.floor(diffInSeconds / 60) + ' ' + translations.minutes_ago;
-    if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + ' ' + translations.hours_ago;
-    return Math.floor(diffInSeconds / 86400) + ' ' + translations.days_ago;
-}
+    // Format time ago function
+    window.formatTimeAgo = function(timestamp) {
+        const now = new Date();
+        const time = new Date(timestamp);
+        const diffInSeconds = Math.floor((now - time) / 1000);
+        if (diffInSeconds < 60) return translations.just_now;
+        if (diffInSeconds < 3600) return Math.floor(diffInSeconds / 60) + ' ' + translations.minutes_ago;
+        if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + ' ' + translations.hours_ago;
+        return Math.floor(diffInSeconds / 86400) + ' ' + translations.days_ago;
+    };
+});
 </script>
 {% endblock %}
