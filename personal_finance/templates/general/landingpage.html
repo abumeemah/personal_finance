@@ -6,7 +6,7 @@
     <!-- Welcome Section - Streamlined -->
     <div class="section-card welcome-section-card text-center">
         <h1 class="section-title">{{ t('general_welcome', default='Welcome to FiCore Africa') | e }}</h1>
-        <p class="text-muted">{{ t('general_ficore_desc', default='Africas leading platform for personal finance, tailored for you.') | e }}</p>
+        <p class="text-muted">{{ t('general_ficore_desc', default='Africa\'s leading platform for personal finance, tailored for you.') | e }}</p>
         
         <!-- Initial Get Started Button -->
         <div id="initial-cta" class="mb-3">
@@ -135,7 +135,7 @@
     <!-- Why FiCore -->
     <div class="section-card why-section mt-5">
         <h2 class="section-title text-center"><i class="bi bi-info-circle-fill me-2 text-primary"></i>{{ t('general_why_ficore', default='Why FiCore Africa?') | e }}</h2>
-        <p class="text-center text-muted mb-4">{{ t('general_ficore_highlight', default='Africas #1 Localized Personal Finance Platform') | e }}</p>
+        <p class="text-center text-muted mb-4">{{ t('general_ficore_highlight', default='Africa\'s #1 Localized Personal Finance Platform') | e }}</p>
         <div class="row row-cols-1 row-cols-md-4 g-4">
             <div class="col">
                 <div class="why-item text-center">
@@ -165,7 +165,7 @@
                 <div class="why-item text-center">
                     <p class="text-muted">
                         <span class="text-success fw-bold me-1">✓</span>
-                        {{ t('general_secure', default='Advisory-only – we don't access your funds') | e }}
+                        {{ t('general_secure', default='Advisory-only – we don\'t access your funds') | e }}
                     </p>
                 </div>
             </div>
@@ -184,7 +184,7 @@
                 <div class="carousel-item active">
                     <div class="testimonial text-center">
                         <img src="{{ url_for('static', filename='img/default_avatar.png') | e }}" alt="{{ t('general_testimonial_avatar', default='User Avatar') | e }}" class="avatar-circle gradient-bg mx-auto mb-3" data-initials="MU">
-                        <p class="text-muted">{{ t('general_impressed_features', default='FiCores budgeting and bill tracking tools are intuitive and perfect for managing my personal finances!') | e }}</p>
+                        <p class="text-muted">{{ t('general_impressed_features', default='FiCore\'s budgeting and bill tracking tools are intuitive and perfect for managing my personal finances!') | e }}</p>
                         <p class="name fw-bold">User, {{ t('general_personal_user', default='Personal User') | e }}</p>
                     </div>
                 </div>
@@ -395,12 +395,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Define translations object safely
     const translations = {
-        'just_now': '{{ t("general_just_now", default="Just now") | e | replace("'", "\\'") }}',
-        'minutes_ago': '{{ t("general_minutes_ago", default="m ago") | e | replace("'", "\\'") }}',
-        'hours_ago': '{{ t("general_hours_ago", default="h ago") | e | replace("'", "\\'") }}',
-        'days_ago': '{{ t("general_days_ago", default="d ago") | e | replace("'", "\\'") }}',
-        'no_notifications': '{{ t("general_no_notifications", default="No notifications") | e | replace("'", "\\'") }}',
-        'check_back_later': '{{ t("general_check_back_later", default="Check back later") | e | replace("'", "\\'") }}'
+        'just_now': {{ t('general_just_now', default='Just now') | tojson }},
+        'minutes_ago': {{ t('general_minutes_ago', default='m ago') | tojson }},
+        'hours_ago': {{ t('general_hours_ago', default='h ago') | tojson }},
+        'days_ago': {{ t('general_days_ago', default='d ago') | tojson }},
+        'no_notifications': {{ t('general_no_notifications', default='No notifications') | tojson }},
+        'check_back_later': {{ t('general_check_back_later', default='Check back later') | tojson }}
     };
 
     console.log('Rendered translations:', translations);
