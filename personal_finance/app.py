@@ -36,6 +36,12 @@ from shopping.shopping import shopping_bp
 # Load environment variables
 load_dotenv()
 
+# DEBUG: environment variables loaded by app.config.from_mapping:
+print("DEBUG: environment variables loaded by app.config.from_mapping:")
+print("SECRET_KEY:", repr(os.getenv('SECRET_KEY')))
+print("MONGO_URI:", repr(os.getenv('MONGO_URI')))
+print("ADMIN_PASSWORD:", repr(os.getenv('ADMIN_PASSWORD')))
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -60,6 +66,11 @@ app.config.from_mapping(
     SESSION_COOKIE_NAME='ficore_session',
     SUPPORTED_LANGUAGES=['en', 'ha']
 )
+
+# DEBUGGING: Print app.config loaded values
+print("app.config['SECRET_KEY']:", repr(app.config.get('SECRET_KEY')))
+print("app.config['MONGO_URI']:", repr(app.config.get('MONGO_URI')))
+print("app.config['ADMIN_PASSWORD']:", repr(app.config.get('ADMIN_PASSWORD')))
 
 # Validate critical configuration
 for key in ['SECRET_KEY', 'MONGO_URI', 'ADMIN_PASSWORD']:
