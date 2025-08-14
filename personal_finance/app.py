@@ -146,6 +146,19 @@ def create_app():
     # Setup session
     logger.info('Creating TTL index for sessions collection')
     app.extensions['mongo']['ficodb'].sessions.create_index("created_at", expireAfterSeconds=300)
+
+    # Register blueprints
+    app.register_blueprint(users_bp, url_prefix='/users')
+    app.register_blueprint(credits_bp, url_prefix='/credits')
+    app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
+    app.register_blueprint(reports_bp, url_prefix='/reports')
+    app.register_blueprint(settings_bp, url_prefix='/settings')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(bill_bp, url_prefix='/bill')
+    app.register_blueprint(budget_bp, url_prefix='/budget')
+    app.register_blueprint(summaries_bp, url_prefix='/summaries')
+    app.register_blueprint(shopping_bp, url_prefix='/shopping')
+    app.register_blueprint(general_bp, url_prefix='/general')
     
     # Initialize data
     with app.app_context():
@@ -187,19 +200,6 @@ def create_app():
                 {'_id': admin_username.lower()},
                 {'$set': {'password_hash': generate_password_hash(admin_password)}}
             )
-
-    # Register blueprints
-    app.register_blueprint(users_bp, url_prefix='/users')
-    app.register_blueprint(credits_bp, url_prefix='/credits')
-    app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
-    app.register_blueprint(reports_bp, url_prefix='/reports')
-    app.register_blueprint(settings_bp, url_prefix='/settings')
-    app.register_blueprint(admin_bp, url_prefix='/admin')
-    app.register_blueprint(bill_bp, url_prefix='/bill')
-    app.register_blueprint(budget_bp, url_prefix='/budget')
-    app.register_blueprint(summaries_bp, url_prefix='/summaries')
-    app.register_blueprint(shopping_bp, url_prefix='/shopping')
-    app.register_blueprint(general_bp, url_prefix='/general')
 
     # Template filters and context processors
 
