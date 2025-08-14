@@ -86,6 +86,23 @@ except Exception as e:
     logger.error('MongoDB connection failed: %s', str(e))
     raise
 
+# User class defined at module level
+class User(UserMixin):
+    def __init__(self, id, email, display_name=None, role='personal'):
+        self.id = id
+        self.email = email
+        self.display_name = display_name or id
+        self.role = role
+
+    @property
+    def is_active(self):
+        user = app.extensions['mongo']['ficodb'].users.find_one({'_id': self.id})
+        return user.get('is_active', True) if user else False
+
+    def get_id(self):
+        return str(self.id)
+
+
 # App setup
 def create_app():
     # Initialize extensions
@@ -114,22 +131,6 @@ def create_app():
                     logger.info(f'New session for user {current_user.id}: {session["sid"]}')
             return f(*args, **kwargs)
         return decorated_function
-
-    # User class
-    class User(UserMixin):
-        def __init__(self, id, email, display_name=None, role='personal'):
-            self.id = id
-            self.email = email
-            self.display_name = display_name or id
-            self.role = role
-
-        @property
-        def is_active(self):
-            user = app.extensions['mongo']['ficodb'].users.find_one({'_id': self.id})
-            return user.get('is_active', True) if user else False
-
-        def get_id(self):
-            return str(self.id)
 
     @login_manager.user_loader
     def load_user(user_id):
