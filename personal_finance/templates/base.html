@@ -444,7 +444,7 @@
             try {
                 const endpoint = {% if current_user.is_authenticated %}
                     {% if current_user.role == 'personal' %}
-                        '{{ url_for("personal.summaries.notification_count") | e }}'
+                        '{{ url_for("summaries.notification_count") | e }}'
                     {% else %}
                         '{{ url_for("business.notification_count") | e }}'
                     {% endif %}
@@ -480,7 +480,7 @@
             try {
                 const endpoint = {% if current_user.is_authenticated %}
                     {% if current_user.role == 'personal' %}
-                        '{{ url_for("personal.summaries.notifications") | e }}'
+                        '{{ url_for("summaries.notifications") | e }}'
                     {% else %}
                         '{{ url_for("business.notifications") | e }}'
                     {% endif %}
