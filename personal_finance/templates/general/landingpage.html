@@ -392,15 +392,19 @@
 
 {% block extra_scripts %}
 {% set translations = {
-    'just_now': t('general_just_now', default='Just now') | e,
-    'minutes_ago': t('general_minutes_ago', default='m ago') | e,
-    'hours_ago': t('general_hours_ago', default='h ago') | e,
-    'days_ago': t('general_days_ago', default='d ago') | e,
-    'no_notifications': t('general_no_notifications', default='No notifications') | e,
-    'check_back_later': t('general_check_back_later', default='Check back later') | e
+    'just_now': t('general_just_now', default='Just now'),
+    'minutes_ago': t('general_minutes_ago', default='m ago'),
+    'hours_ago': t('general_hours_ago', default='h ago'),
+    'days_ago': t('general_days_ago', default='d ago'),
+    'no_notifications': t('general_no_notifications', default='No notifications'),
+    'check_back_later': t('general_check_back_later', default='Check back later')
 } %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Debug translations JSON
+    const translations = {{ translations | tojson }};
+    console.log('Rendered translations:', translations);
+
     // Initialize tooltips with explicit touch handling
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(tooltipTriggerEl => {
         new bootstrap.Tooltip(tooltipTriggerEl, {
