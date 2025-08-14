@@ -16,7 +16,7 @@
                     </div>
                 {% endif %}
             {% endwith %}
-            <p class="mb-3">{{ t('general_select_role_description', default='Choose your account type: <strong>Personal</strong> for managing individual finances (budgets, bills, net worth); <strong>Trader</strong> for business owners tracking inventory, debtors, and creditors; <strong>Agent</strong> for authorized representatives (requires a valid Agent ID); or <strong>Admin</strong> for system administrators (restricted access).') | escape }}</p>
+            <p class="mb-3">{{ t('general_signup_description', default='Create an account to manage your personal finances with tools for budgeting, bill tracking, and shopping.') | escape }}</p>
             <form class="validate-form needs-validation" method="POST" action="{{ url_for('users.signup') }}" novalidate aria-labelledby="signup-form-title">
                 {{ form.hidden_tag() }}
                 <div class="form-group mb-3">
@@ -55,39 +55,6 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="form-group mb-3">
-                    <label class="form-label" for="role">{{ t('general_role', default='Role') | escape }}</label>
-                    {{ form.role(class="form-select" + (" is-invalid" if form.role.errors else ""), required=True, id="role", **{"aria-describedby": "roleFeedback" if form.role.errors else "", "aria-required": "true"}) | safe }}
-                    {% if form.role.errors %}
-                        <div id="roleFeedback" class="invalid-feedback" role="alert">
-                            {% for error in form.role.errors %}
-                                {{ error | escape }}<br>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="form-group mb-3" id="agentIdGroup" style="display: none;">
-                    <label class="form-label" for="agent_id">{{ t('general_agent_id', default='Agent ID Number') | escape }}</label>
-                    {{ form.agent_id(class="form-control" + (" is-invalid" if form.agent_id.errors else ""), value=form.agent_id.data or '', id="agent_id", **{"aria-describedby": "agentIdFeedback" if form.agent_id.errors else "", "aria-required": "true"}) | safe }}
-                    {% if form.agent_id.errors %}
-                        <div id="agentIdFeedback" class="invalid-feedback" role="alert">
-                            {% for error in form.agent_id.errors %}
-                                {{ error | escape }}<br>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="form-group mb-3">
-                    <label class="form-label" for="language">{{ t('general_language', default='Language') | escape }}</label>
-                    {{ form.language(class="form-select" + (" is-invalid" if form.language.errors else ""), required=True, id="language", **{"aria-describedby": "languageFeedback" if form.language.errors else "", "aria-required": "true"}) | safe }}
-                    {% if form.language.errors %}
-                        <div id="languageFeedback" class="invalid-feedback" role="alert">
-                            {% for error in form.language.errors %}
-                                {{ error | escape }}<br>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
                 <div class="form-group mb-3 text-center">
                     <p>{{ t('general_agree_to_terms', default='By signing up, you agree to our') | escape }} <a href="{{ url_for('general_bp.terms') | escape }}" aria-label="{{ t('general_terms', default='Terms of Service') | escape }}">{{ t('general_terms', default='Terms of Service') | escape }}</a>.</p>
                 </div>
@@ -114,26 +81,10 @@ function togglePassword(inputId, iconId) {
     icon.parentElement.setAttribute('aria-label', isPassword ? '{{ t("general_hide_password", default="Hide password") | escape }}' : '{{ t("general_show_password", default="Show password") | escape }}');
 }
 
-function toggleAgentIdField() {
-    const roleSelect = document.getElementById('role');
-    const agentIdGroup = document.getElementById('agentIdGroup');
-    const agentIdInput = document.getElementById('agent_id');
-    if (roleSelect.value === 'agent') {
-        agentIdGroup.style.display = 'block';
-        agentIdInput.setAttribute('required', 'true');
-    } else {
-        agentIdGroup.style.display = 'none';
-        agentIdInput.removeAttribute('required');
-    }
-}
-
 (function () {
     'use strict';
     const forms = document.querySelectorAll('.needs-validation');
     Array.from(forms).forEach(form => {
-        toggleAgentIdField();
-        document.getElementById('role').addEventListener('change', toggleAgentIdField);
-
         form.addEventListener('submit', event => {
             if (!form.checkValidity()) {
                 event.preventDefault();
