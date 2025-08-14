@@ -55,6 +55,16 @@ def home():
         title=trans('general_business_home', lang=session.get('lang', 'en'))
     )
 
+@general_bp.route('/access_denied')
+@login_required
+def access_denied():
+    """Render a friendly access denied page."""
+    return render_template(
+        'general/access_denied.html',
+        title=trans('access_denied', default='Access Denied'),
+        message=trans('general_access_denied', default='You do not have permission to access this page.')
+    ), 403
+
 @general_bp.route('/about')
 def about():
     """Public about page."""
@@ -133,7 +143,7 @@ def feedback():
         ['report', trans('reports_dashboard', default='Reports')],
         ['budget', trans('budget_budget_planner', default='Budget')],
         ['bill', trans('bill_bill_planner', default='Bill')],
-     ]
+    ]
     if request.method == 'POST':
         try:
             tool_name = request.form.get('tool_name')
@@ -196,6 +206,3 @@ def feedback():
                 return render_template('general/error.html', error=str(e), title=trans('general_feedback', lang=lang)), 500
     # Handle GET request
     return render_template('general/feedback.html', tool_options=tool_options, title=trans('general_feedback', lang=lang))
-
-
-
