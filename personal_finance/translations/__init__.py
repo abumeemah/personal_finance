@@ -118,6 +118,18 @@ def trans(key: str, lang: Optional[str] = None, default: Optional[str] = None, *
     current_logger = g.get('logger', logger) if has_request_context() else logger
     session_id = session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'
 
+    # Handle invalid translation keys (None or not a string)
+    if key is None or not isinstance(key, str):
+        with lock:
+            error_key_id = f"invalid_key_{key}"
+            if error_key_id not in logged_missing_keys:
+                logged_missing_keys.add(error_key_id)
+                current_logger.error(
+                    f"Invalid translation key received: '{key}'. Must be a non-empty string.",
+                    extra={'session_id': session_id}
+                )
+        return default or (str(key) if key is not None else '')
+
     # Default to session language or 'en'
     if lang is None:
         lang = session.get('lang', 'en') if has_request_context() else 'en'
