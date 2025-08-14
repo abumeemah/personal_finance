@@ -29,12 +29,12 @@
     <header class="fintech-top-header">
         <div class="header-left">
             {% if current_user.is_authenticated %}
-                <a class="profile-link" href="{{ url_for('personal.index') if current_user.role == 'personal' else url_for('general_bp.home') | e }}" aria-label="{{ t('general_ficore_africa', default='FiCore Africa') | e }}">
+                <a class="profile-link" href="{{ url_for('general_bp.home') if current_user.role == 'personal' else url_for('general_bp.home') | e }}" aria-label="{{ t('general_ficore_africa', default='FiCore Africa') | e }}">
                     <img src="{{ current_user.profile_picture if current_user.profile_picture else url_for('static', filename='img/default_profile.png') | e }}" alt="{{ t('general_user_profile_picture', default='User Profile Picture') | e }}" class="profile-avatar">
                     <span class="greeting-text">{{ t('general_hi_user', default='Hi') | e }}, {{ current_user.display_name | default(current_user.id) | e }}</span>
                 </a>
             {% else %}
-                <a class="navbar-brand" href="{{ url_for('personal.index') if request.blueprint == 'personal' else url_for('general_bp.home') | e }}" aria-label="{{ t('general_ficore_africa', default='FiCore Africa') | e }}">
+                <a class="navbar-brand" href="{{ url_for('general_bp.home') if request.blueprint == 'personal' else url_for('general_bp.home') | e }}" aria-label="{{ t('general_ficore_africa', default='FiCore Africa') | e }}">
                     <img src="{{ url_for('static', filename='img/ficore_logo.png') | e }}" alt="{{ t('general_ficore_africa_logo', default='FiCore Africa Logo') | e }}" class="ficore-logo">
                     <span class="brand-text">{{ t('general_ficore_africa', default='FiCore Africa') | e }}</span>
                 </a>
@@ -69,7 +69,7 @@
                 <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == ('personal.index' if request.blueprint == 'personal' else 'general_bp.home') %}active{% endif %}" href="{{ url_for('personal.index') if request.blueprint == 'personal' else url_for('general_bp.home') | e }}" data-bs-toggle="tooltip" data-bs-title="{{ t('general_home_tooltip', default='Go to homepage') | e }}" aria-current="{% if request.endpoint == ('personal.index' if request.blueprint == 'personal' else 'general_bp.home') %}page{% endif %}">{{ t('general_home', default='Home') | e }}</a>
+                            <a class="nav-link {% if request.endpoint == ('general_bp.home' if request.blueprint == 'personal' else 'general_bp.home') %}active{% endif %}" href="{{ url_for('general_bp.home') if request.blueprint == 'personal' else url_for('general_bp.home') | e }}" data-bs-toggle="tooltip" data-bs-title="{{ t('general_home_tooltip', default='Go to homepage') | e }}" aria-current="{% if request.endpoint == ('general_bp.home' if request.blueprint == 'personal' else 'general_bp.home') %}page{% endif %}">{{ t('general_home', default='Home') | e }}</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'general_bp.about' %}active{% endif %}" href="{{ url_for('general_bp.about') | e }}" data-bs-toggle="tooltip" data-bs-title="{{ t('general_about_tooltip', default='Learn more about FiCore') | e }}" aria-current="{% if request.endpoint == 'general_bp.about' %}page{% endif %}">{{ t('general_about', default='About') | e }}</a>
