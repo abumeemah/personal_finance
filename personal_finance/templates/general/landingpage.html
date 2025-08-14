@@ -105,7 +105,7 @@
             {% for category in categories %}
                 {% set category_tools = explore_features_for_template | selectattr('category', 'equalto', category) | list %}
                 {% if category_tools %}
-                    <h4>{{ t('general_' + category | lower + '_tools', default=category + ' Tools') | e }}</h4>
+                    
                     <div class="row">
                         {% for tool in category_tools %}
                             {% if tool.get('label') in ['Budget', 'Bills', 'Shopping'] %}
