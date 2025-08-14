@@ -39,12 +39,28 @@ def initialize_app_data(app):
             db = get_db()
             db.command('ping')
             logger.info(f"{trans('general_database_connection_established', default='MongoDB connection established')}", 
-                       extra={'session_id': 'no-session-id'})
+                        extra={'session_id': 'no-session-id'})
             
             collections = db.list_collection_names()
             
             # Define collection schemas for bill, shopping, and budget
             collection_schemas = {
+                # ADDED THE NEW SCHEMA FOR USERS HERE
+                'users': {
+                    'validator': {
+                        '$jsonSchema': {
+                            'bsonType': 'object',
+                            'required': ['user_id', 'ficore_credit_balance'],
+                            'properties': {
+                                'user_id': {'bsonType': 'string'},
+                                'ficore_credit_balance': {'bsonType': 'double', 'minimum': 0}
+                            }
+                        }
+                    },
+                    'indexes': [
+                        {'key': [('user_id', ASCENDING)], 'unique': True}
+                    ]
+                },
                 'shopping_items': {
                     'validator': {
                         '$jsonSchema': {
@@ -208,7 +224,7 @@ def initialize_app_data(app):
                                     extra={'session_id': 'no-session-id'})
                     except Exception as e:
                         logger.error(f"Failed to update validator for collection {collection_name}: {str(e)}", 
-                                    exc_info=True, extra={'session_id': 'no-session-id'})
+                                     exc_info=True, extra={'session_id': 'no-session-id'})
                         raise
                 else:
                     try:
@@ -217,7 +233,7 @@ def initialize_app_data(app):
                                    extra={'session_id': 'no-session-id'})
                     except Exception as e:
                         logger.error(f"Failed to create collection {collection_name}: {str(e)}", 
-                                    exc_info=True, extra={'session_id': 'no-session-id'})
+                                     exc_info=True, extra={'session_id': 'no-session-id'})
                         raise
                 
                 existing_indexes = db[collection_name].index_information()
@@ -245,7 +261,7 @@ def initialize_app_data(app):
                                                extra={'session_id': 'no-session-id'})
                                 except Exception as e:
                                     logger.error(f"Failed to drop index {existing_index_name} on {collection_name}: {str(e)}", 
-                                                exc_info=True, extra={'session_id': 'no-session-id'})
+                                                 exc_info=True, extra={'session_id': 'no-session-id'})
                                     raise
                             break
                     if not index_exists:
@@ -267,11 +283,11 @@ def initialize_app_data(app):
                                                extra={'session_id': 'no-session-id'})
                             else:
                                 logger.error(f"Failed to create index on {collection_name}: {str(e)}", 
-                                            exc_info=True, extra={'session_id': 'no-session-id'})
+                                             exc_info=True, extra={'session_id': 'no-session-id'})
                                 raise
         except Exception as e:
             logger.error(f"{trans('general_database_initialization_failed', default='Failed to initialize database')}: {str(e)}", 
-                        exc_info=True, extra={'session_id': 'no-session-id'})
+                         exc_info=True, extra={'session_id': 'no-session-id'})
             raise
 
 def get_budgets(db, filter_kwargs):
@@ -289,7 +305,7 @@ def get_budgets(db, filter_kwargs):
         return list(db.budgets.find(filter_kwargs).sort('created_at', DESCENDING))
     except Exception as e:
         logger.error(f"{trans('general_budgets_fetch_error', default='Error getting budgets')}: {str(e)}", 
-                    exc_info=True, extra={'session_id': 'no-session-id'})
+                     exc_info=True, extra={'session_id': 'no-session-id'})
         raise
 
 def get_bills(db, filter_kwargs):
@@ -307,7 +323,7 @@ def get_bills(db, filter_kwargs):
         return list(db.bills.find(filter_kwargs).sort('due_date', ASCENDING))
     except Exception as e:
         logger.error(f"{trans('general_bills_fetch_error', default='Error getting bills')}: {str(e)}", 
-                    exc_info=True, extra={'session_id': 'no-session-id'})
+                     exc_info=True, extra={'session_id': 'no-session-id'})
         raise
 
 def create_budget(db, budget_data):
@@ -331,7 +347,7 @@ def create_budget(db, budget_data):
         return str(result.inserted_id)
     except Exception as e:
         logger.error(f"{trans('general_budget_creation_error', default='Error creating budget record')}: {str(e)}", 
-                    exc_info=True, extra={'session_id': budget_data.get('session_id', 'no-session-id')})
+                     exc_info=True, extra={'session_id': budget_data.get('session_id', 'no-session-id')})
         raise
 
 def create_bill(db, bill_data):
@@ -355,7 +371,7 @@ def create_bill(db, bill_data):
         return str(result.inserted_id)
     except Exception as e:
         logger.error(f"{trans('general_bill_creation_error', default='Error creating bill record')}: {str(e)}", 
-                    exc_info=True, extra={'session_id': bill_data.get('session_id', 'no-session-id')})
+                     exc_info=True, extra={'session_id': bill_data.get('session_id', 'no-session-id')})
         raise
 
 def create_bill_reminder(db, reminder_data):
@@ -379,7 +395,7 @@ def create_bill_reminder(db, reminder_data):
         return str(result.inserted_id)
     except Exception as e:
         logger.error(f"{trans('general_bill_reminder_creation_error', default='Error creating bill reminder')}: {str(e)}", 
-                    exc_info=True, extra={'session_id': reminder_data.get('session_id', 'no-session-id')})
+                     exc_info=True, extra={'session_id': reminder_data.get('session_id', 'no-session-id')})
         raise
 
 def create_shopping_item(db, item_data):
@@ -404,7 +420,7 @@ def create_shopping_item(db, item_data):
         return str(result.inserted_id)
     except Exception as e:
         logger.error(f"{trans('general_shopping_item_creation_error', default='Error creating shopping item')}: {str(e)}", 
-                    exc_info=True, extra={'session_id': item_data.get('session_id', 'no-session-id')})
+                     exc_info=True, extra={'session_id': item_data.get('session_id', 'no-session-id')})
         raise
 
 def get_shopping_items(db, filter_kwargs):
@@ -422,7 +438,7 @@ def get_shopping_items(db, filter_kwargs):
         return list(db.shopping_items.find(filter_kwargs).sort('created_at', DESCENDING))
     except Exception as e:
         logger.error(f"{trans('general_shopping_items_fetch_error', default='Error getting shopping items')}: {str(e)}", 
-                    exc_info=True, extra={'session_id': 'no-session-id'})
+                     exc_info=True, extra={'session_id': 'no-session-id'})
         raise
 
 def to_dict_shopping_item(record):
@@ -471,7 +487,7 @@ def update_shopping_item(db, item_id, update_data):
         return False
     except Exception as e:
         logger.error(f"{trans('general_shopping_item_update_error', default='Error updating shopping item with ID')} {item_id}: {str(e)}", 
-                    exc_info=True, extra={'session_id': 'no-session-id'})
+                     exc_info=True, extra={'session_id': 'no-session-id'})
         raise
 
 def to_dict_budget(record):
@@ -555,7 +571,7 @@ def create_shopping_list(db, list_data):
         return str(result.inserted_id)
     except Exception as e:
         logger.error(f"{trans('general_shopping_list_creation_error', default='Error creating shopping list')}: {str(e)}", 
-                    exc_info=True, extra={'session_id': list_data.get('session_id', 'no-session-id')})
+                     exc_info=True, extra={'session_id': list_data.get('session_id', 'no-session-id')})
         raise
 
 def normalize_shopping_list(record):
@@ -597,7 +613,7 @@ def get_shopping_lists(db, filter_kwargs):
         return [normalize_shopping_list(record) for record in db.shopping_lists.find(filter_kwargs).sort('updated_at', DESCENDING)]
     except Exception as e:
         logger.error(f"{trans('general_shopping_lists_fetch_error', default='Error getting shopping lists')}: {str(e)}", 
-                    exc_info=True, extra={'session_id': 'no-session-id'})
+                     exc_info=True, extra={'session_id': 'no-session-id'})
         raise
 
 def update_shopping_list(db, list_id, update_data):
@@ -628,7 +644,52 @@ def update_shopping_list(db, list_id, update_data):
         return False
     except Exception as e:
         logger.error(f"{trans('general_shopping_list_update_error', default='Error updating shopping list with ID')} {list_id}: {str(e)}", 
-                    exc_info=True, extra={'session_id': 'no-session-id'})
+                     exc_info=True, extra={'session_id': 'no-session-id'})
+        raise
+
+def update_user_balance(db, user_id, amount):
+    """
+    Update a user's ficore_credit_balance atomically.
+    
+    Args:
+        db: MongoDB database instance
+        user_id: The ID of the user to update
+        amount: The amount to add to the balance (can be positive or negative)
+    
+    Returns:
+        bool: True if updated, False otherwise
+    """
+    try:
+        result = db.users.update_one(
+            {'user_id': user_id},
+            {'$inc': {'ficore_credit_balance': amount}}
+        )
+        if result.modified_count > 0:
+            logger.info(f"Updated user {user_id} ficore_credit_balance by {amount}", 
+                        extra={'session_id': 'no-session-id'})
+            return True
+        return False
+    except Exception as e:
+        logger.error(f"Error updating user balance for {user_id}: {str(e)}", 
+                     exc_info=True, extra={'session_id': 'no-session-id'})
+        raise
+
+def get_ficore_credit_transactions(db, filter_kwargs):
+    """
+    Retrieve ficore credit transactions based on filter criteria.
+    
+    Args:
+        db: MongoDB database instance
+        filter_kwargs: Dictionary of filter criteria
+    
+    Returns:
+        list: List of transaction records
+    """
+    try:
+        return list(db.ficore_credit_transactions.find(filter_kwargs).sort('created_at', DESCENDING))
+    except Exception as e:
+        logger.error(f"Error getting ficore credit transactions: {str(e)}", 
+                     exc_info=True, extra={'session_id': 'no-session-id'})
         raise
 
 def to_dict_shopping_list(record):
