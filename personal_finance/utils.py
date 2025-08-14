@@ -90,7 +90,7 @@ _PERSONAL_TOOLS = [
 
 _PERSONAL_NAV = [
     {
-        "endpoint": "index",
+        "endpoint": "home",
         "label": "Home",
         "label_key": "general_home",
         "description_key": "general_home_desc",
