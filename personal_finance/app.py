@@ -36,6 +36,16 @@ from shopping.shopping import shopping_bp
 # Load environment variables
 load_dotenv()
 
+# Custom LogRecord factory to handle missing attributes
+def custom_record_factory(*args, **kwargs):
+    record = logging.makeLogRecord(*args, **kwargs)
+    record.__dict__.setdefault('session_id', 'none')
+    record.__dict__.setdefault('user_role', 'none')
+    record.__dict__.setdefault('ip_address', 'none')
+    return record
+
+logging.setLogRecordFactory(custom_record_factory)
+
 # DEBUG: environment variables loaded by app.config.from_mapping:
 print("DEBUG: environment variables loaded by app.config.from_mapping:")
 print("SECRET_KEY:", repr(os.getenv('SECRET_KEY')))
@@ -57,6 +67,7 @@ app.config.from_mapping(
     SECRET_KEY=os.getenv('SECRET_KEY'),
     SERVER_NAME=os.getenv('SERVER_NAME', 'ficore-africa.onrender.com'),
     MONGO_URI=os.getenv('MONGO_URI'),
+    ADMIN_PASSWORD=os.getenv('ADMIN_PASSWORD'),  # Added to fix the issue
     SESSION_TYPE='mongodb',
     SESSION_PERMANENT=False,
     PERMANENT_SESSION_LIFETIME=timedelta(minutes=5),
