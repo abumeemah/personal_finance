@@ -2,6 +2,7 @@ from datetime import datetime
 from pymongo import ASCENDING, DESCENDING
 from bson import ObjectId
 import logging
+from pymongo.errors import DuplicateKeyError, OperationFailure, PyMongoError
 from translations import trans
 from utils import get_mongo_db, logger
 from werkzeug.security import generate_password_hash
@@ -38,7 +39,7 @@ def initialize_app_data(app):
         try:
             db = get_db()
             db.command('ping')
-            logger.info(f"{trans('general_database_connection_established', default='MongoDB connection established')}", 
+            logger.info(f"{trans('general_database_connection_established', default='MongoDB connection established')}",
                         extra={'session_id': 'no-session-id'})
             
             collections = db.list_collection_names()
@@ -220,73 +221,127 @@ def initialize_app_data(app):
                 if collection_name in collections:
                     try:
                         db.command('collMod', collection_name, validator=config.get('validator', {}))
-                        logger.info(f"Updated validator for collection: {collection_name}", 
+                        logger.info(f"Updated validator for collection: {collection_name}",
                                     extra={'session_id': 'no-session-id'})
+                    except OperationFailure as e:
+                        # In some cases, collMod might fail. This may be expected behavior on some MongoDB versions.
+                        logger.warning(f"Could not update validator for collection {collection_name}: {e}.")
                     except Exception as e:
-                        logger.error(f"Failed to update validator for collection {collection_name}: {str(e)}", 
-                                     exc_info=True, extra={'session_id': 'no-session-id'})
+                        logger.error(f"Failed to update validator for collection {collection_name}: {str(e)}",
+                                    exc_info=True, extra={'session_id': 'no-session-id'})
                         raise
                 else:
                     try:
                         db.create_collection(collection_name, validator=config.get('validator', {}))
-                        logger.info(f"{trans('general_collection_created', default='Created collection')}: {collection_name}", 
+                        logger.info(f"{trans('general_collection_created', default='Created collection')}: {collection_name}",
                                    extra={'session_id': 'no-session-id'})
                     except Exception as e:
-                        logger.error(f"Failed to create collection {collection_name}: {str(e)}", 
-                                     exc_info=True, extra={'session_id': 'no-session-id'})
+                        logger.error(f"Failed to create collection {collection_name}: {str(e)}",
+                                    exc_info=True, extra={'session_id': 'no-session-id'})
                         raise
                 
                 existing_indexes = db[collection_name].index_information()
                 for index in config.get('indexes', []):
                     keys = index['key']
                     options = {k: v for k, v in index.items() if k != 'key'}
+                    is_unique = options.get('unique', False)
                     index_key_tuple = tuple(keys)
-                    index_name = '_'.join(f"{k}_{v if isinstance(v, int) else str(v).replace(' ', '_')}" for k, v in keys)
+                    
+                    # Generate a consistent name for the index, if one is not provided.
+                    # This ensures we can find and check it correctly.
+                    index_name = options.get('name', '_'.join(f"{k}_{v if isinstance(v, int) else str(v).replace(' ', '_')}" for k, v in keys))
+
                     index_exists = False
                     for existing_index_name, existing_index_info in existing_indexes.items():
-                        if tuple(existing_index_info['key']) == index_key_tuple:
-                            existing_options = {k: v for k, v in existing_index_info.items() if k not in ['key', 'v', 'ns']}
+                        existing_key_tuple = tuple(existing_index_info['key'])
+                        if existing_key_tuple == index_key_tuple:
+                            existing_options = {k: v for k, v in existing_index_info.items() if k not in ['key', 'v', 'ns', 'name']}
                             if existing_options == options:
-                                logger.info(f"{trans('general_index_exists', default='Index already exists on')} {collection_name}: {keys} with options {options}", 
-                                           extra={'session_id': 'no-session-id'})
+                                logger.info(f"{trans('general_index_exists', default='Index already exists on')} {collection_name}: {keys} with options {options}",
+                                            extra={'session_id': 'no-session-id'})
                                 index_exists = True
+                                break
                             else:
                                 if existing_index_name == '_id_':
-                                    logger.info(f"Skipping drop of _id index on {collection_name}", 
-                                               extra={'session_id': 'no-session-id'})
+                                    logger.info(f"Skipping drop of _id index on {collection_name}",
+                                                extra={'session_id': 'no-session-id'})
                                     continue
                                 try:
                                     db[collection_name].drop_index(existing_index_name)
-                                    logger.info(f"Dropped conflicting index {existing_index_name} on {collection_name}", 
-                                               extra={'session_id': 'no-session-id'})
+                                    logger.info(f"Dropped conflicting index {existing_index_name} on {collection_name}",
+                                                extra={'session_id': 'no-session-id'})
                                 except Exception as e:
-                                    logger.error(f"Failed to drop index {existing_index_name} on {collection_name}: {str(e)}", 
+                                    logger.error(f"Failed to drop index {existing_index_name} on {collection_name}: {str(e)}",
+                                                exc_info=True, extra={'session_id': 'no-session-id'})
+                                    raise
+                                break
+                    
+                    if not index_exists:
+                        # Attempt to create the index with a retry mechanism for duplicates
+                        max_retries = 3
+                        retry_count = 0
+                        while retry_count < max_retries:
+                            try:
+                                db[collection_name].create_index(keys, name=index_name, **options)
+                                logger.info(f"{trans('general_index_created', default='Created index on')} {collection_name}: {keys} with options {options}",
+                                            extra={'session_id': 'no-session-id'})
+                                break # Success, exit the while loop
+                            except DuplicateKeyError as e:
+                                # This handles the case where a unique index cannot be created due to existing duplicate data
+                                logger.warning(f"Failed to create UNIQUE index on {collection_name}: {index_name} due to existing duplicate data. Attempting to resolve...")
+                                retry_count += 1
+                                if not is_unique:
+                                    # If it's not a unique index but somehow a DuplicateKeyError is raised,
+                                    # something is fundamentally wrong. Raise the error.
+                                    logger.error(f"Unexpected DuplicateKeyError on non-unique index. Error: {str(e)}")
+                                    raise
+                                
+                                # Use aggregation to find duplicate documents
+                                key_field = keys[0][0] # Assuming single-key unique index for this logic
+                                pipeline = [
+                                    {"$group": {"_id": f"${key_field}", "dupes": {"$push": "$_id"}, "count": {"$sum": 1}}},
+                                    {"$match": {"count": {"$gt": 1}}}
+                                ]
+                                
+                                duplicate_groups = list(db[collection_name].aggregate(pipeline))
+                                
+                                for group in duplicate_groups:
+                                    dupe_ids = group['dupes'][1:] # Get all but the first document
+                                    logger.info(f"Found {len(dupe_ids)} duplicate documents for key '{group['_id']}'. Assigning new UUIDs.")
+                                    for doc_id in dupe_ids:
+                                        # Update the duplicate document with a new unique user_id
+                                        db[collection_name].update_one({"_id": doc_id}, {"$set": {key_field: str(uuid.uuid4())}})
+                                
+                                logger.info(f"Duplicate data cleanup for collection {collection_name} complete. Retrying index creation.")
+                                continue # Retry the index creation in the while loop
+                            except OperationFailure as e:
+                                if 'IndexKeySpecsConflict' in str(e):
+                                    logger.info(f"Attempting to resolve index conflict for {collection_name}: {index_name}",
+                                                extra={'session_id': 'no-session-id'})
+                                    if index_name != '_id_':
+                                        db[collection_name].drop_index(index_name)
+                                        db[collection_name].create_index(keys, name=index_name, **options)
+                                        logger.info(f"Recreated index on {collection_name}: {keys} with options {options}",
+                                                    extra={'session_id': 'no-session-id'})
+                                    else:
+                                        logger.info(f"Skipping recreation of _id index on {collection_name}",
+                                                    extra={'session_id': 'no-session-id'})
+                                else:
+                                    logger.error(f"Failed to create index on {collection_name}: {str(e)}",
                                                  exc_info=True, extra={'session_id': 'no-session-id'})
                                     raise
-                            break
-                    if not index_exists:
-                        try:
-                            db[collection_name].create_index(keys, name=index_name, **options)
-                            logger.info(f"{trans('general_index_created', default='Created index on')} {collection_name}: {keys} with options {options}", 
-                                       extra={'session_id': 'no-session-id'})
-                        except Exception as e:
-                            if 'IndexKeySpecsConflict' in str(e):
-                                logger.info(f"Attempting to resolve index conflict for {collection_name}: {index_name}", 
-                                           extra={'session_id': 'no-session-id'})
-                                if index_name != '_id_':
-                                    db[collection_name].drop_index(index_name)
-                                    db[collection_name].create_index(keys, name=index_name, **options)
-                                    logger.info(f"Recreated index on {collection_name}: {keys} with options {options}", 
-                                               extra={'session_id': 'no-session-id'})
-                                else:
-                                    logger.info(f"Skipping recreation of _id index on {collection_name}", 
-                                               extra={'session_id': 'no-session-id'})
-                            else:
-                                logger.error(f"Failed to create index on {collection_name}: {str(e)}", 
+                                break
+                            except PyMongoError as e:
+                                logger.error(f"Failed to create index on {collection_name}: {str(e)}",
                                              exc_info=True, extra={'session_id': 'no-session-id'})
                                 raise
+                        else:
+                            # This block runs if the while loop completes without a 'break'
+                            logger.error(f"Failed to create index on {collection_name} after {max_retries} retries due to DuplicateKeyError.",
+                                         extra={'session_id': 'no-session-id'})
+                            raise Exception(f"Failed to create index on {collection_name} after multiple retries.")
         except Exception as e:
-            logger.error(f"{trans('general_database_initialization_failed', default='Failed to initialize database')}: {str(e)}", 
+            logger.error(f"{trans('general_database_initialization_failed', default='Failed to initialize database')}: {str(e)}",
                          exc_info=True, extra={'session_id': 'no-session-id'})
             raise
 
