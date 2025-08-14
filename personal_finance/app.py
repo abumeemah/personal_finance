@@ -68,7 +68,7 @@ def custom_record_factory(name, level, fn, lno, msg, args, exc_info, func=None, 
     }
     return logging.makeLogRecord(record_dict)
 
-logging.setLogRecordFactory(custom_record_factory)
+
 
 # Configure logging
 logging.basicConfig(
