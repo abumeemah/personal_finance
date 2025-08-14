@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block title %}{{ t('general_welcome', default='Welcome to FiCore Africa') | e }}{% endblock %}
 
 {% block content %}
@@ -52,13 +52,43 @@
     <div class="section-card mt-5">
         <h3 class="section-title">{{ t('general_who_we_serve', default='Who We Serve') | e }}</h3>
         <p class="text-muted">{{ t('general_who_we_serve_desc', default='FiCore empowers individuals with tailored personal finance tools.') | e }}</p>
-        <div class="row">
-            <div class="col-md-4">
+        <div class="row row-cols-1 row-cols-md-4 g-4">
+            <div class="col">
                 <a href="{{ url_for('users.signup') }}" class="tool-card-link">
-                    <div class="card mb-3">
+                    <div class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <h5>{{ t('general_personal', default='Personal Users') | e }}</h5>
-                            <p>{{ t('general_personal_desc', default='Plan budgets, track bills, and manage shopping with ease.') | e }}</p>
+                            <h5>{{ t('general_artisans', default='Artisans') | e }}</h5>
+                            <p>{{ t('general_artisans_desc', default='Manage daily earnings, track expenses, and plan budgets to grow your craft.') | e }}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col">
+                <a href="{{ url_for('users.signup') }}" class="tool-card-link">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5>{{ t('general_professionals', default='Professionals') | e }}</h5>
+                            <p>{{ t('general_professionals_desc', default='Organize bills and savings to focus on your career and financial goals.') | e }}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col">
+                <a href="{{ url_for('users.signup') }}" class="tool-card-link">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5>{{ t('general_young_couples', default='Young Couples') | e }}</h5>
+                            <p>{{ t('general_young_couples_desc', default='Simplify shared expenses and shopping lists for a stress-free financial life.') | e }}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col">
+                <a href="{{ url_for('users.signup') }}" class="tool-card-link">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5>{{ t('general_modern_entrepreneurs', default='Modern Entrepreneurs') | e }}</h5>
+                            <p>{{ t('general_modern_entrepreneurs_desc', default='Track personal finances to fuel your ventures with confidence.') | e }}</p>
                         </div>
                     </div>
                 </a>
@@ -275,7 +305,7 @@
             </div>
             <div class="accordion-item">
                 <h3 class="accordion-header" id="faqFCsRegulated">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFCsRegulated" aria-expanded="false" aria-controls="faqFCsRegulated">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFCsRegulated" aria-expanded="false" aria-controls="collapseFCsRegulated">
                         {{ t('general_faq_fcs_regulated', default='Are FCs regulated or considered money?') | e }}
                     </button>
                 </h3>
@@ -455,5 +485,4 @@ function formatTimeAgo(timestamp) {
     return Math.floor(diffInSeconds / 86400) + ' ' + translations.days_ago;
 }
 </script>
-{% endblock %}
 {% endblock %}
