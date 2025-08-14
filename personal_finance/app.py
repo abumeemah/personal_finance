@@ -277,7 +277,7 @@ def create_app():
         if current_user.is_authenticated:
             if current_user.role == 'admin':
                 return redirect(url_for('dashboard.index'))
-            return redirect(url_for('bill_bp.home'))
+            return redirect(url_for('general_bp.home'))
         return redirect(url_for('general_bp.landing'))
 
     @app.route('/change-language', methods=['POST'])
