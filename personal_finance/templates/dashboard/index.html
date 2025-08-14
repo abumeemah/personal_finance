@@ -5,7 +5,7 @@
     <!-- Breadcrumb Navigation -->
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">{{ t('general_home', default='Home') }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('general_bp.home') }}">{{ t('general_home', default='Home') }}</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ t('dashboard_title', default='Dashboard') }}</li>
         </ol>
     </nav>
@@ -25,7 +25,7 @@
         <div class="mb-5">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h3 class="text-primary">
-                    <i class="fas fa-chart-pie me-2"></i>
+                    <i class="bi bi-pie-chart me-2"></i>
                     {{ t('general_personal_finance', default='Personal Finance') }}
                 </h3>
                 {% if personal_finance_summary.has_personal_data %}
@@ -37,15 +37,15 @@
                 <!-- Personal Finance Quick Stats -->
                 <div class="row g-3 mb-4">
                     {% if personal_finance_summary.latest_budget %}
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-body text-center">
                                 <div class="text-primary mb-2">
-                                    <i class="fas fa-calculator fa-2x"></i>
+                                    <i class="bi bi-pie-chart fa-2x"></i>
                                 </div>
                                 <h6 class="card-title">{{ t('budget_title', default='Budget') }}</h6>
                                 <p class="card-text">
-                                    <span class="h5 {{ 'text-success' if personal_finance_summary.latest_budget.surplus_deficit > 0 else 'text-danger' }}">
+                                    <span class="h5 {{ 'text-success' if personal_finance_summary.latest_budget.surplus_deficit >= 0 else 'text-danger' }}">
                                         {{ personal_finance_summary.latest_budget.surplus_deficit | format_currency }}
                                     </span><br>
                                     <small class="text-muted">{{ t('budget_surplus_deficit', default='Surplus/Deficit') }}</small>
@@ -57,11 +57,11 @@
                     {% endif %}
 
                     {% if personal_finance_summary.total_bills > 0 %}
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-body text-center">
                                 <div class="text-warning mb-2">
-                                    <i class="fas fa-file-invoice fa-2x"></i>
+                                    <i class="bi bi-receipt fa-2x"></i>
                                 </div>
                                 <h6 class="card-title">{{ t('bill_title', default='Bills') }}</h6>
                                 <p class="card-text">
@@ -81,11 +81,11 @@
                     {% endif %}
 
                     {% if personal_finance_summary.total_shopping_lists | default(0) > 0 %}
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-body text-center">
                                 <div class="text-info mb-2">
-                                    <i class="fas fa-cart-plus fa-2x"></i>
+                                    <i class="bi bi-cart fa-2x"></i>
                                 </div>
                                 <h6 class="card-title">{{ t('shopping_title', default='Shopping Lists') }}</h6>
                                 <p class="card-text">
@@ -103,6 +103,7 @@
                         </div>
                     </div>
                     {% endif %}
+                </div>
 
                 <!-- Personal Finance Quick Actions -->
                 <div class="card border-0 shadow-sm mb-4">
@@ -111,27 +112,27 @@
                     </div>
                     <div class="card-body">
                         <div class="row g-2">
-                            <div class="col-md-2 col-6">
+                            <div class="col-md-3 col-6">
                                 <a href="{{ url_for('personal.budget.main') }}" class="btn btn-outline-primary w-100">
-                                    <i class="fas fa-calculator d-block mb-1"></i>
+                                    <i class="bi bi-pie-chart d-block mb-1"></i>
                                     <small>{{ t('budget_title', default='Budget') }}</small>
                                 </a>
                             </div>
-                            <div class="col-md-2 col-6">
+                            <div class="col-md-3 col-6">
                                 <a href="{{ url_for('personal.bill.main') }}" class="btn btn-outline-warning w-100">
-                                    <i class="fas fa-file-invoice d-block mb-1"></i>
+                                    <i class="bi bi-receipt d-block mb-1"></i>
                                     <small>{{ t('bill_title', default='Bills') }}</small>
                                 </a>
                             </div>
-                            <div class="col-md-2 col-6">
+                            <div class="col-md-3 col-6">
                                 <a href="{{ url_for('personal.shopping.main') }}" class="btn btn-outline-info w-100">
-                                    <i class="fas fa-cart-plus d-block mb-1"></i>
+                                    <i class="bi bi-cart d-block mb-1"></i>
                                     <small>{{ t('shopping_title', default='Shopping Lists') }}</small>
                                 </a>
                             </div>
-                            <div class="col-md-2 col-6">
+                            <div class="col-md-3 col-6">
                                 <a href="{{ url_for('credits.request_credits') }}" class="btn btn-outline-success w-100" data-bs-toggle="tooltip" title="{{ t('credits_tooltip', default='Request additional Ficore Credits to use premium features') }}">
-                                    <i class="bi-coin d-block mb-1"></i>
+                                    <i class="bi bi-coin d-block mb-1"></i>
                                     <small>{{ t('credits_dashboard', default='Ficore Credits') }}</small>
                                 </a>
                             </div>
@@ -143,32 +144,32 @@
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-body text-center py-5">
                         <div class="mb-4">
-                            <i class="fas fa-chart-pie fa-4x text-primary opacity-50"></i>
+                            <i class="bi bi-pie-chart fa-4x text-primary opacity-50"></i>
                         </div>
                         <h4 class="mb-3">{{ t('dashboard_welcome_personal_finance', default='Welcome to Personal Finance') }}</h4>
                         <p class="text-muted mb-4">{{ t('dashboard_personal_finance_intro', default='Take control of your finances with our comprehensive personal finance tools. Start by creating your first budget or tracking your bills.') }}</p>
                         <div class="row g-2 justify-content-center">
-                            <div class="col-md-2 col-6">
+                            <div class="col-md-3 col-6">
                                 <a href="{{ url_for('personal.budget.main') }}" class="btn btn-primary w-100">
-                                    <i class="fas fa-calculator d-block mb-1"></i>
+                                    <i class="bi bi-pie-chart d-block mb-1"></i>
                                     <small>{{ t('budget_create_first', default='Create Budget') }}</small>
                                 </a>
                             </div>
-                            <div class="col-md-2 col-6">
+                            <div class="col-md-3 col-6">
                                 <a href="{{ url_for('personal.bill.main') }}" class="btn btn-outline-primary w-100">
-                                    <i class="fas fa-file-invoice d-block mb-1"></i>
+                                    <i class="bi bi-receipt d-block mb-1"></i>
                                     <small>{{ t('bill_add_first', default='Add Bills') }}</small>
                                 </a>
                             </div>
-                            <div class="col-md-2 col-6">
+                            <div class="col-md-3 col-6">
                                 <a href="{{ url_for('personal.shopping.main') }}" class="btn btn-outline-info w-100">
-                                    <i class="fas fa-cart-plus d-block mb-1"></i>
+                                    <i class="bi bi-cart d-block mb-1"></i>
                                     <small>{{ t('shopping_create_first', default='Create Shopping List') }}</small>
                                 </a>
                             </div>
-                            <div class="col-md-2 col-6">
+                            <div class="col-md-3 col-6">
                                 <a href="{{ url_for('credits.request_credits') }}" class="btn btn-outline-success w-100" data-bs-toggle="tooltip" title="{{ t('credits_tooltip', default='Request additional Ficore Credits to use premium features') }}">
-                                    <i class="bi-coin d-block mb-1"></i>
+                                    <i class="bi bi-coin d-block mb-1"></i>
                                     <small>{{ t('credits_dashboard', default='Ficore Credits') }}</small>
                                 </a>
                             </div>
@@ -179,192 +180,11 @@
         </div>
         {% endif %}
 
-        <!-- Trader/Business Section for Traders and s -->
-        {% if current_user.role in ['trader', 'admin'] %}
+        {% if current_user.role == 'admin' %}
         <div class="mb-4">
-            <h3>{{ t('general_quick_actions', default='Quick Actions') }}</h3>
+            <h3>{{ t('general_admin_actions', default='Admin Actions') }}</h3>
             <div class="d-flex flex-wrap gap-2">
-                <a href="{{ url_for('creditors.add') }}" class="btn btn-primary">{{ t('creditors_create_what_you_owe', default='Create What You Owe') }}</a>
-                <a href="{{ url_for('debtors.add') }}" class="btn btn-primary">{{ t('debtors_create_what_they_owe_you', default='Create What They Owe You') }}</a>
-                <a href="{{ url_for('payments.add') }}" class="btn btn-primary">{{ t('payments_add_money_out', default='Add Money Out') }}</a>
-                <a href="{{ url_for('receipts.add') }}" class="btn btn-primary">{{ t('receipts_add_money_in', default='Add Money In') }}</a>
-                <a href="{{ url_for('credits.request_credits') }}" class="btn btn-success" data-bs-toggle="tooltip" title="{{ t('credits_tooltip', default='Request additional Ficore Credits to use premium features') }}">{{ t('credits_dashboard', default='Ficore Credits') }}</a>
-                {% if current_user.role == 'admin' %}
-                    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-warning">{{ t('admin_dashboard', default='Admin Dashboard') }}</a>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="row g-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h3>{{ t('creditors_what_you_owe', default='What You Owe') }}</h3>
-                        <small class="subtext">{{ t('creditors_what_you_owe_subtext', default='Kuɗin da Mutane ke Bin Ka') }}</small>
-                        {% if recent_creditors %}
-                            <table class="table table-striped mt-3">
-                                <thead>
-                                    <tr>
-                                        <th>{{ t('general_name', default='Name') }}</th>
-                                        <th>{{ t('general_amount', default='Amount') }}</th>
-                                        <th>{{ t('general_actions', default='Actions') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for creditor in recent_creditors %}
-                                        <tr>
-                                            <td>{{ creditor.name }}</td>
-                                            <td>{{ creditor.amount_owed | format_currency }}</td>
-                                            <td>
-                                                <button class="btn btn-secondary btn-sm actions-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#creditorActionsModal"
-                                                        data-id="{{ creditor._id }}"
-                                                        data-name="{{ creditor.name }}"
-                                                        data-amount="{{ creditor.amount_owed }}"
-                                                        data-contact="{{ creditor.contact or '' }}"
-                                                        data-date="{{ format_date(creditor.created_at) }}"
-                                                        data-description="{{ creditor.description or '' }}">
-                                                    {{ t('general_actions', default='Actions') }}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <p>{{ t('creditors_no_what_you_owe', default='You don\'t owe anyone yet.') }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h3>{{ t('debtors_what_they_owe_you', default='What They Owe You') }}</h3>
-                        <small class="subtext">{{ t('debtors_what_they_owe_you_subtext', default='Kuɗin da Kake Bin Wasu') }}</small>
-                        {% if recent_debtors %}
-                            <table class="table table-striped mt-3">
-                                <thead>
-                                    <tr>
-                                        <th>{{ t('general_name', default='Name') }}</th>
-                                        <th>{{ t('general_amount', default='Amount') }}</th>
-                                        <th>{{ t('general_actions', default='Actions') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for debtor in recent_debtors %}
-                                        <tr>
-                                            <td>{{ debtor.name }}</td>
-                                            <td>{{ debtor.amount_owed | format_currency }}</td>
-                                            <td>
-                                                <button class="btn btn-secondary btn-sm actions-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#debtorActionsModal"
-                                                        data-id="{{ debtor._id }}"
-                                                        data-name="{{ debtor.name }}"
-                                                        data-amount="{{ debtor.amount_owed }}"
-                                                        data-contact="{{ debtor.contact or '' }}"
-                                                        data-date="{{ format_date(debtor.created_at) }}"
-                                                        data-reminders="{{ debtor.get('reminder_count', 0) }}"
-                                                        data-description="{{ debtor.description or '' }}">
-                                                    {{ t('general_actions', default='Actions') }}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <p>{{ t('debtors_no_what_they_owe_you', default='No one owes you yet.') }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h3>{{ t('payments_money_out', default='Money Out') }}</h3>
-                        <small class="subtext">{{ t('payments_money_out_subtext', default='Track your expenses and payments') }}</small>
-                        {% if recent_payments %}
-                            <table class="table table-striped mt-3">
-                                <thead>
-                                    <tr>
-                                        <th>{{ t('payments_recipient', default='Recipient') }}</th>
-                                        <th>{{ t('general_amount', default='Amount') }}</th>
-                                        <th>{{ t('general_actions', default='Actions') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for payment in recent_payments %}
-                                        <tr>
-                                            <td>{{ payment.recipient }}</td>
-                                            <td>{{ payment.amount | format_currency }}</td>
-                                            <td>
-                                                <button class="btn btn-secondary btn-sm actions-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#paymentActionsModal"
-                                                        data-id="{{ payment._id }}"
-                                                        data-recipient="{{ payment.recipient }}"
-                                                        data-amount="{{ payment.amount }}"
-                                                        data-date="{{ format_date(payment.created_at) }}"
-                                                        data-description="{{ payment.description or '' }}">
-                                                    {{ t('general_actions', default='Actions') }}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <p>{{ t('payments_no_money_out', default='No money out recorded yet.') }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h3>{{ t('receipts_money_in', default='Money In') }}</h3>
-                        <small class="subtext">{{ t('receipts_money_in_subtext', default='Track your income and receipts') }}</small>
-                        {% if recent_receipts %}
-                            <table class="table table-striped mt-3">
-                                <thead>
-                                    <tr>
-                                        <th>{{ t('receipts_payer', default='Payer') }}</th>
-                                        <th>{{ t('general_amount', default='Amount') }}</th>
-                                        <th>{{ t('general_actions', default='Actions') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for receipt in recent_receipts %}
-                                        <tr>
-                                            <td>{{ receipt.payer }}</td>
-                                            <td>{{ receipt.amount | format_currency }}</td>
-                                            <td>
-                                                <button class="btn btn-secondary btn-sm actions-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#receiptActionsModal"
-                                                        data-id="{{ receipt._id }}"
-                                                        data-payer="{{ receipt.payer }}"
-                                                        data-amount="{{ receipt.amount }}"
-                                                        data-date="{{ format_date(receipt.created_at) }}"
-                                                        data-description="{{ receipt.description or '' }}">
-                                                    {{ t('general_actions', default='Actions') }}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <p>{{ t('receipts_no_money_in', default='No money in recorded yet.') }}</p>
-                        {% endif %}
-                    </div>
-                </div>
+                <a href="{{ url_for('admin.dashboard') }}" class="btn btn-warning">{{ t('admin_dashboard', default='Admin Dashboard') }}</a>
             </div>
         </div>
         {% endif %}
@@ -375,257 +195,6 @@
             <a href="{{ url_for('users.login') }}" class="btn btn-primary">{{ t('general_login', default='Log In') }}</a>
         </div>
     {% endif %}
-
-    <!-- Creditor Actions Modal -->
-    <div class="modal fade" id="creditorActionsModal" tabindex="-1" aria-labelledby="creditorActionsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="creditorActionsModalLabel">{{ t('creditors_what_you_owe', default='What You Owe') }}</h5>
-                    <button class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('general_close', default='Close') }}"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>{{ t('general_name', default='Name') }}:</strong> <span id="creditorModalName"></span></p>
-                            <p><strong>{{ t('general_amount', default='Amount') }}:</strong> <span id="creditorModalAmount"></span></p>
-                            <p><strong>{{ t('general_contact', default='Contact') }}:</strong> <span id="creditorModalContact"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>{{ t('general_description', default='Description') }}:</strong> <span id="creditorModalDescription"></span></p>
-                            <p><strong>{{ t('general_date', default='Date') }}:</strong> <span id="creditorModalDate"></span></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <a id="creditorViewBtn" class="btn btn-info" href="#">{{ t('general_view', default='View') }}</a>
-                    <button id="creditorShareBtn" class="btn btn-success" style="display: none;">{{ t('general_share', default='Share') }}</button>
-                    <a id="creditorEditBtn" class="btn btn-primary" href="#">{{ t('general_edit', default='Edit') }}</a>
-                    <form id="creditorDeleteForm" action="#" method="POST" style="display:inline;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('{{ t('general_confirm_delete', default='Are you sure?') }}')">
-                            {{ t('general_delete', default='Delete') }}
-                        </button>
-                    </form>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('general_close', default='Close') }}</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Debtor Actions Modal -->
-    <div class="modal fade" id="debtorActionsModal" tabindex="-1" aria-labelledby="debtorActionsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="debtorActionsModalLabel">{{ t('debtors_what_they_owe_you', default='What They Owe You') }}</h5>
-                    <button class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('general_close', default='Close') }}"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>{{ t('general_name', default='Name') }}:</strong> <span id="debtorModalName"></span></p>
-                            <p><strong>{{ t('general_amount', default='Amount') }}:</strong> <span id="debtorModalAmount"></span></p>
-                            <p><strong>{{ t('general_contact', default='Contact') }}:</strong> <span id="debtorModalContact"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>{{ t('general_description', default='Description') }}:</strong> <span id="debtorModalDescription"></span></p>
-                            <p><strong>{{ t('general_date', default='Date') }}:</strong> <span id="debtorModalDate"></span></p>
-                            <p><strong>{{ t('debtors_reminders', default='Reminders') }}:</strong> <span id="debtorModalReminders"></span></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <a id="debtorViewBtn" class="btn btn-info" href="#">{{ t('general_view', default='View') }}</a>
-                    <button id="debtorReminderBtn" class="btn btn-warning" style="display: none;">{{ t('general_reminder', default='Reminder') }}</button>
-                    <button id="debtorSnoozeBtn" class="btn btn-primary" style="display: none;">{{ t('general_snooze', default='Snooze') }}</button>
-                    <button id="debtorShareBtn" class="btn btn-success" style="display: none;">{{ t('general_share', default='Share') }}</button>
-                    <a id="debtorEditBtn" class="btn btn-primary" href="#">{{ t('general_edit', default='Edit') }}</a>
-                    <form id="debtorDeleteForm" action="#" method="POST" style="display:inline;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('{{ t('general_confirm_delete', default='Are you sure?') }}')">
-                            {{ t('general_delete', default='Delete') }}
-                        </button>
-                    </form>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('general_close', default='Close') }}</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Payment Actions Modal -->
-    <div class="modal fade" id="paymentActionsModal" tabindex="-1" aria-labelledby="paymentActionsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="paymentActionsModalLabel">{{ t('payments_money_out', default='Money Out') }}</h5>
-                    <button class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('general_close', default='Close') }}"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>{{ t('payments_recipient', default='Recipient') }}:</strong> <span id="paymentModalRecipient"></span></p>
-                            <p><strong>{{ t('general_amount', default='Amount') }}:</strong> <span id="paymentModalAmount"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>{{ t('general_description', default='Description') }}:</strong> <span id="paymentModalDescription"></span></p>
-                            <p><strong>{{ t('general_date', default='Date') }}:</strong> <span id="paymentModalDate"></span></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <a id="paymentViewBtn" class="btn btn-info" href="#">{{ t('general_view', default='View') }}</a>
-                    <a id="paymentEditBtn" class="btn btn-primary" href="#">{{ t('general_edit', default='Edit') }}</a>
-                    <form id="paymentDeleteForm" action="#" method="POST" style="display:inline;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('{{ t('general_confirm_delete', default='Are you sure?') }}')">
-                            {{ t('general_delete', default='Delete') }}
-                        </button>
-                    </form>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('general_close', default='Close') }}</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Receipt Actions Modal -->
-    <div class="modal fade" id="receiptActionsModal" tabindex="-1" aria-labelledby="receiptActionsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="receiptActionsModalLabel">{{ t('receipts_money_in', default='Money In') }}</h5>
-                    <button class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('general_close', default='Close') }}"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>{{ t('receipts_payer', default='Payer') }}:</strong> <span id="receiptModalPayer"></span></p>
-                            <p><strong>{{ t('general_amount', default='Amount') }}:</strong> <span id="receiptModalAmount"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>{{ t('general_description', default='Description') }}:</strong> <span id="receiptModalDescription"></span></p>
-                            <p><strong>{{ t('general_date', default='Date') }}:</strong> <span id="receiptModalDate"></span></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <a id="receiptViewBtn" class="btn btn-info" href="#">{{ t('general_view', default='View') }}</a>
-                    <a id="receiptEditBtn" class="btn btn-primary" href="#">{{ t('general_edit', default='Edit') }}</a>
-                    <form id="receiptDeleteForm" action="#" method="POST" style="display:inline;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('{{ t('general_confirm_delete', default='Are you sure?') }}')">
-                            {{ t('general_delete', default='Delete') }}
-                        </button>
-                    </form>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('general_close', default='Close') }}</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Shopping List Actions Modal -->
-    <div class="modal fade" id="shoppingActionsModal" tabindex="-1" aria-labelledby="shoppingActionsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="shoppingActionsModalLabel">{{ t('shopping_title', default='Shopping Lists') }}</h5>
-                    <button class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('general_close', default='Close') }}"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>{{ t('general_name', default='Name') }}:</strong> <span id="shoppingModalName"></span></p>
-                            <p><strong>{{ t('general_amount', default='Amount') }}:</strong> <span id="shoppingModalAmount"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>{{ t('general_description', default='Description') }}:</strong> <span id="shoppingModalDescription"></span></p>
-                            <p><strong>{{ t('general_date', default='Date') }}:</strong> <span id="shoppingModalDate"></span></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <a id="shoppingViewBtn" class="btn btn-info" href="#">{{ t('general_view', default='View') }}</a>
-                    <a id="shoppingEditBtn" class="btn btn-primary" href="#">{{ t('general_edit', default='Edit') }}</a>
-                    <form id="shoppingDeleteForm" action="#" method="POST" style="display:inline;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('{{ t('general_confirm_delete', default='Are you sure?') }}')">
-                            {{ t('general_delete', default='Delete') }}
-                        </button>
-                    </form>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('general_close', default='Close') }}</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Reminder Modal -->
-    <div class="modal fade" id="reminderModal" tabindex="-1" aria-labelledby="reminderModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="reminderModalLabel">{{ t('general_send_reminder', default='Send Reminder') }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('general_close', default='Close') }}"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="reminderForm">
-                        <div class="mb-3">
-                            <label for="reminderType" class="form-label">{{ t('general_reminder_type', default='Reminder Type') }}</label>
-                            <select class="form-select" id="reminderType" required>
-                                <option value="sms">{{ t('general_sms', default='SMS') }}</option>
-                                <option value="whatsapp">{{ t('general_whatsapp', default='WhatsApp') }}</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="reminderMessage" class="form-label">{{ t('general_message', default='Message') }}</label>
-                            <textarea class="form-control" id="reminderMessage" rows="4" required></textarea>
-                            <div class="form-text">{{ t('general_reminder_cost', default='Cost: 2 Ficore Credits per reminder') }}</div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="sendReminderBtn">
-                        {{ t('general_send_reminder', default='Send Reminder') }}
-                    </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        {{ t('general_cancel', default='Cancel') }}
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Snooze Modal -->
-    <div class="modal fade" id="snoozeModal" tabindex="-1" aria-labelledby="snoozeModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="snoozeModalLabel">{{ t('general_snooze_reminder', default='Snooze Reminder') }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('general_close', default='Close') }}"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="snoozeForm">
-                        <div class="mb-3">
-                            <label for="snoozeDays" class="form-label">{{ t('general_snooze_duration', default='Snooze Duration') }}</label>
-                            <select class="form-select" id="snoozeDays" required>
-                                <option value="1">{{ t('general_1_day', default='1 Day') }}</option>
-                                <option value="3">{{ t('general_3_days', default='3 Days') }}</option>
-                                <option value="7">{{ t('general_7_days', default='7 Days') }}</option>
-                                <option value="14">{{ t('general_14_days', default='14 Days') }}</option>
-                            </select>
-                            <div class="form-text">{{ t('general_snooze_cost', default='Cost: 1 Ficore Credit per snooze') }}</div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="snoozeReminderBtn">
-                        {{ t('general_snooze', default='Snooze') }}
-                    </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        {{ t('general_cancel', default='Cancel') }}
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
@@ -635,291 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize tooltips
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
-
-    let currentData = null;
-
-    // Creditor Actions
-    document.querySelectorAll('#creditorActionsModal').forEach(modal => {
-        modal.addEventListener('show.bs.modal', (event) => {
-            const button = event.relatedTarget;
-            currentData = {
-                _id: button.dataset.id,
-                name: button.dataset.name,
-                amount: parseFloat(button.dataset.amount).toLocaleString(),
-                contact: button.dataset.contact,
-                date: button.dataset.date,
-                description: button.dataset.description
-            };
-
-            // Populate modal
-            document.getElementById('creditorModalName').textContent = currentData.name;
-            document.getElementById('creditorModalAmount').textContent = `{{ t('general_currency_symbol', default='₦') }}${currentData.amount}`;
-            document.getElementById('creditorModalContact').textContent = currentData.contact || '-';
-            document.getElementById('creditorModalDescription').textContent = currentData.description || '-';
-            document.getElementById('creditorModalDate').textContent = currentData.date;
-
-            // Update action buttons
-            document.getElementById('creditorViewBtn').href = `/creditors/view/${currentData._id}`;
-            document.getElementById('creditorEditBtn').href = `/creditors/edit/${currentData._id}`;
-            document.getElementById('creditorDeleteForm').action = `/creditors/delete/${currentData._id}`;
-            document.getElementById('creditorShareBtn').style.display = currentData.contact ? 'inline-block' : 'none';
-        });
-    });
-
-    document.getElementById('creditorShareBtn').addEventListener('click', () => {
-        if (!currentData || !currentData.contact) {
-            alert('{{ t('general_no_contact', default='No contact provided for sharing') }}');
-            return;
-        }
-        fetch(`/creditors/share/${currentData._id}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.open(data.whatsapp_link, '_blank');
-                    bootstrap.Modal.getInstance(document.getElementById('creditorActionsModal')).hide();
-                } else {
-                    alert('{{ t('general_failed_to_share_iou', default='Failed to share IOU') }}: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error sharing IOU:', error);
-                alert('{{ t('general_error_sharing_iou', default='Error sharing IOU') }}');
-            });
-    });
-
-    // Debtor Actions
-    document.querySelectorAll('#debtorActionsModal').forEach(modal => {
-        modal.addEventListener('show.bs.modal', (event) => {
-            const button = event.relatedTarget;
-            currentData = {
-                _id: button.dataset.id,
-                name: button.dataset.name,
-                amount: parseFloat(button.dataset.amount).toLocaleString(),
-                contact: button.dataset.contact,
-                date: button.dataset.date,
-                reminders: button.dataset.reminders,
-                description: button.dataset.description
-            };
-
-            // Populate modal
-            document.getElementById('debtorModalName').textContent = currentData.name;
-            document.getElementById('debtorModalAmount').textContent = `{{ t('general_currency_symbol', default='₦') }}${currentData.amount}`;
-            document.getElementById('debtorModalContact').textContent = currentData.contact || '-';
-            document.getElementById('debtorModalDescription').textContent = currentData.description || '-';
-            document.getElementById('debtorModalDate').textContent = currentData.date;
-            document.getElementById('debtorModalReminders').textContent = currentData.reminders;
-
-            // Update action buttons
-            document.getElementById('debtorViewBtn').href = `/debtors/view/${currentData._id}`;
-            document.getElementById('debtorEditBtn').href = `/debtors/edit/${currentData._id}`;
-            document.getElementById('debtorDeleteForm').action = `/debtors/delete/${currentData._id}`;
-            document.getElementById('debtorReminderBtn').style.display = currentData.contact ? 'inline-block' : 'none';
-            document.getElementById('debtorSnoozeBtn').style.display = currentData.contact ? 'inline-block' : 'none';
-            document.getElementById('debtorShareBtn').style.display = currentData.contact ? 'inline-block' : 'none';
-        });
-    });
-
-    document.getElementById('debtorReminderBtn').addEventListener('click', () => {
-        if (!currentData) return;
-        const defaultMessage = `Hi ${currentData.name}, just a reminder you owe {{ t('general_currency_symbol', default='₦') }}${currentData.amount} recorded on FiCore Records (${currentData.date}). Please settle soon.`;
-        document.getElementById('reminderMessage').value = defaultMessage;
-        new bootstrap.Modal(document.getElementById('reminderModal')).show();
-    });
-
-    document.getElementById('debtorSnoozeBtn').addEventListener('click', () => {
-        if (!currentData) return;
-        new bootstrap.Modal(document.getElementById('snoozeModal')).show();
-    });
-
-    document.getElementById('debtorShareBtn').addEventListener('click', () => {
-        if (!currentData || !currentData.contact) {
-            alert('{{ t('general_no_contact', default='No contact provided for sharing') }}');
-            return;
-        }
-        fetch(`/debtors/share/${currentData._id}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.open(data.whatsapp_link, '_blank');
-                    bootstrap.Modal.getInstance(document.getElementById('debtorActionsModal')).hide();
-                } else {
-                    alert('{{ t('general_failed_to_share_iou', default='Failed to share IOU') }}: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error sharing IOU:', error);
-                alert('{{ t('general_error_sharing_iou', default='Error sharing IOU') }}');
-            });
-    });
-
-    // Payment Actions
-    document.querySelectorAll('#paymentActionsModal').forEach(modal => {
-        modal.addEventListener('show.bs.modal', (event) => {
-            const button = event.relatedTarget;
-            currentData = {
-                _id: button.dataset.id,
-                recipient: button.dataset.recipient,
-                amount: parseFloat(button.dataset.amount).toLocaleString(),
-                date: button.dataset.date,
-                description: button.dataset.description
-            };
-
-            // Populate modal
-            document.getElementById('paymentModalRecipient').textContent = currentData.recipient;
-            document.getElementById('paymentModalAmount').textContent = `{{ t('general_currency_symbol', default='₦') }}${currentData.amount}`;
-            document.getElementById('paymentModalDescription').textContent = currentData.description || '-';
-            document.getElementById('paymentModalDate').textContent = currentData.date;
-
-            // Update action buttons
-            document.getElementById('paymentViewBtn').href = `/payments/view/${currentData._id}`;
-            document.getElementById('paymentEditBtn').href = `/payments/edit/${currentData._id}`;
-            document.getElementById('paymentDeleteForm').action = `/payments/delete/${currentData._id}`;
-        });
-    });
-
-    // Receipt Actions
-    document.querySelectorAll('#receiptActionsModal').forEach(modal => {
-        modal.addEventListener('show.bs.modal', (event) => {
-            const button = event.relatedTarget;
-            currentData = {
-                _id: button.dataset.id,
-                payer: button.dataset.payer,
-                amount: parseFloat(button.dataset.amount).toLocaleString(),
-                date: button.dataset.date,
-                description: button.dataset.description
-            };
-
-            // Populate modal
-            document.getElementById('receiptModalPayer').textContent = currentData.payer;
-            document.getElementById('receiptModalAmount').textContent = `{{ t('general_currency_symbol', default='₦') }}${currentData.amount}`;
-            document.getElementById('receiptModalDescription').textContent = currentData.description || '-';
-            document.getElementById('receiptModalDate').textContent = currentData.date;
-
-            // Update action buttons
-            document.getElementById('receiptViewBtn').href = `/receipts/view/${currentData._id}`;
-            document.getElementById('receiptEditBtn').href = `/receipts/edit/${currentData._id}`;
-            document.getElementById('receiptDeleteForm').action = `/receipts/delete/${currentData._id}`;
-        });
-    });
-
-    // Shopping List Actions
-    document.querySelectorAll('#shoppingActionsModal').forEach(modal => {
-        modal.addEventListener('show.bs.modal', (event) => {
-            const button = event.relatedTarget;
-            currentData = {
-                _id: button.dataset.id,
-                name: button.dataset.name,
-                amount: parseFloat(button.dataset.amount).toLocaleString(),
-                date: button.dataset.date,
-                description: button.dataset.description
-            };
-
-            // Populate modal
-            document.getElementById('shoppingModalName').textContent = currentData.name;
-            document.getElementById('shoppingModalAmount').textContent = `{{ t('general_currency_symbol', default='₦') }}${currentData.amount}`;
-            document.getElementById('shoppingModalDescription').textContent = currentData.description || '-';
-            document.getElementById('shoppingModalDate').textContent = currentData.date;
-
-            // Update action buttons
-            document.getElementById('shoppingViewBtn').href = `/personal/shopping/view/${currentData._id}`;
-            document.getElementById('shoppingEditBtn').href = `/personal/shopping/edit/${currentData._id}`;
-            document.getElementById('shoppingDeleteForm').action = `/personal/shopping/delete/${currentData._id}`;
-        });
-    });
-
-    // Reminder Functionality
-    document.getElementById('sendReminderBtn').addEventListener('click', function() {
-        if (!currentData) return;
-
-        const reminderType = document.getElementById('reminderType').value;
-        const message = document.getElementById('reminderMessage').value;
-
-        if (!message.trim()) {
-            alert('{{ t('general_message_required', default='Message is required') }}');
-            return;
-        }
-
-        this.disabled = true;
-        this.textContent = '{{ t('general_sending', default='Sending...') }}';
-
-        const endpoint = currentData._id.includes('creditor') ? '/creditors/send_reminder' : '/debtors/send_reminder';
-
-        fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                debtId: currentData._id,
-                recipient: currentData.contact,
-                message,
-                type: reminderType
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('{{ t('general_reminder_sent_successfully', default='Reminder sent successfully') }}');
-                bootstrap.Modal.getInstance(document.getElementById('reminderModal')).hide();
-                bootstrap.Modal.getInstance(document.getElementById(currentData._id.includes('creditor') ? 'creditorActionsModal' : 'debtorActionsModal')).hide();
-                location.reload();
-            } else {
-                alert('{{ t('general_failed_to_send_reminder', default='Failed to send reminder') }}: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Error sending reminder:', error);
-            alert('{{ t('general_error_sending_reminder', default='Error sending reminder') }}');
-        })
-        .finally(() => {
-            this.disabled = false;
-            this.textContent = '{{ t('general_send_reminder', default='Send Reminder') }}';
-        });
-    });
-
-    // Snooze Functionality
-    document.getElementById('snoozeReminderBtn').addEventListener('click', function() {
-        if (!currentData) return;
-
-        const snoozeDays = parseInt(document.getElementById('snoozeDays').value);
-
-        this.disabled = true;
-        this.textContent = '{{ t('general_snoozing', default='Snoozing...') }}';
-
-        const endpoint = currentData._id.includes('creditor') ? '/creditors/send_reminder' : '/debtors/send_reminder';
-
-        fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                debtId: currentData._id,
-                snooze_days: snoozeDays
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('{{ t('general_snooze_set_successfully', default='Snooze set successfully') }}');
-                bootstrap.Modal.getInstance(document.getElementById('snoozeModal')).hide();
-                bootstrap.Modal.getInstance(document.getElementById(currentData._id.includes('creditor') ? 'creditorActionsModal' : 'debtorActionsModal')).hide();
-                location.reload();
-            } else {
-                alert('{{ t('general_failed_to_set_snooze', default='Failed to set snooze') }}: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Error setting snooze:', error);
-            alert('{{ t('general_error_setting_snooze', default='Error setting snooze') }}');
-        })
-        .finally(() => {
-            this.disabled = false;
-            this.textContent = '{{ t('general_snooze', default='Snooze') }}';
-        });
-    });
 });
 </script>
 {% endblock %}
