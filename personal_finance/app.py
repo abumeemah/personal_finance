@@ -83,7 +83,7 @@ app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 app.config.from_mapping(
     SECRET_KEY=os.getenv('SECRET_KEY'),
-    SERVER_NAME=os.getenv('SERVER_NAME', 'ficore-africa.onrender.com'),
+    SERVER_NAME=os.getenv('SERVER_NAME', '/'),
     MONGO_URI=os.getenv('MONGO_URI'),
     ADMIN_PASSWORD=os.getenv('ADMIN_PASSWORD'),
     SESSION_TYPE='mongodb',
