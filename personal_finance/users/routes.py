@@ -173,9 +173,9 @@ def get_post_login_redirect(user_role):
     """Determine where to redirect user after login based on their role."""
     try:
         if user_role == 'personal':
-            return url_for('personal.index')
+            return url_for('general_bp.home')
         logger.warning(f"Unknown role '{user_role}' for login redirect, defaulting to home")
-        return url_for('personal.index')
+        return url_for('general_bp.home')
     except Exception as e:
         logger.error(f"Error determining login redirect for role '{user_role}': {str(e)}", exc_info=True)
         return url_for('home')
@@ -185,7 +185,7 @@ def get_explore_tools_redirect(user_role):
     try:
         if user_role == 'personal':
             return url_for('dashboard.index')
-        logger.warning(f"Unknown role '{user_role}' for explore tools redirect, defaulting to personal.index")
+        logger.warning(f"Unknown role '{user_role}' for explore tools redirect, defaulting to general_bp.home")
         return url_for('home')
     except Exception as e:
         logger.error(f"Error determining explore tools redirect for role '{user_role}': {str(e)}", exc_info=True)
