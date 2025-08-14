@@ -38,11 +38,20 @@ load_dotenv()
 
 # Custom LogRecord factory to handle missing attributes
 def custom_record_factory(*args, **kwargs):
-    record = logging.makeLogRecord(*args, **kwargs)
-    record.__dict__.setdefault('session_id', 'none')
-    record.__dict__.setdefault('user_role', 'none')
-    record.__dict__.setdefault('ip_address', 'none')
-    return record
+    # Ensure args[0] is a dict and add default values
+    record_dict = args[0] if args else {}
+    if isinstance(record_dict, dict):
+        record_dict.setdefault('session_id', 'none')
+        record_dict.setdefault('user_role', 'none')
+        record_dict.setdefault('ip_address', 'none')
+    else:
+        record_dict = {
+            'session_id': 'none',
+            'user_role': 'none',
+            'ip_address': 'none',
+            **record_dict
+        }
+    return logging.makeLogRecord(record_dict)
 
 logging.setLogRecordFactory(custom_record_factory)
 
@@ -67,7 +76,7 @@ app.config.from_mapping(
     SECRET_KEY=os.getenv('SECRET_KEY'),
     SERVER_NAME=os.getenv('SERVER_NAME', 'ficore-africa.onrender.com'),
     MONGO_URI=os.getenv('MONGO_URI'),
-    ADMIN_PASSWORD=os.getenv('ADMIN_PASSWORD'),  # Added to fix the issue
+    ADMIN_PASSWORD=os.getenv('ADMIN_PASSWORD'),
     SESSION_TYPE='mongodb',
     SESSION_PERMANENT=False,
     PERMANENT_SESSION_LIFETIME=timedelta(minutes=5),
