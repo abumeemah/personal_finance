@@ -601,3 +601,16 @@ GENERAL_TRANSLATIONS = {
         'general_other': 'Sauran',
         'general_send_email': 'Aika Imel',
     },
+    'reports': {
+        'en': {
+            'reports_start_date': 'Start Date',
+            'reports_end_date': 'End Date',
+            'reports_generate_report': 'Generate Report',
+        },
+        'ha': {
+            'reports_start_date': 'Ranar Fara',
+            'reports_end_date': 'Ranar Ƙarshe',
+            'reports_generate_report': 'Ƙirƙiri Rahoto',
+        }
+    }
+}
