@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, session
+from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import login_required, current_user
 from translations import trans
 import utils
@@ -13,30 +13,18 @@ dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 @dashboard_bp.route('/')
 @login_required
 def index():
-    """Display the user's dashboard with recent activity and role-specific content."""
+    """Display the user's dashboard with personal finance summary."""
     try:
         db = utils.get_mongo_db()
         
         # Determine query based on user role
         query = {} if utils.is_admin() else {'user_id': str(current_user.id)}
 
-        # Initialize data containers
-        recent_creditors = []
-        recent_debtors = []
-        recent_payments = []
-        recent_receipts = []
+        # Initialize data container
         personal_finance_summary = {}
 
-        # Fetch data based on user role
-        if current_user.role in ['trader', 'admin']:
-            # Fetch recent data using new schema for traders and admins
-            recent_creditors = list(db.records.find({**query, 'type': 'creditor'}).sort('created_at', -1).limit(5))
-            recent_debtors = list(db.records.find({**query, 'type': 'debtor'}).sort('created_at', -1).limit(5))
-            recent_payments = list(db.cashflows.find({**query, 'type': 'payment'}).sort('created_at', -1).limit(5))
-            recent_receipts = list(db.cashflows.find({**query, 'type': 'receipt'}).sort('created_at', -1).limit(5))
-
+        # Fetch personal finance data for personal users and admins
         if current_user.role in ['personal', 'admin']:
-            # Fetch personal finance data for personal users and admins
             try:
                 # Get latest records from each personal finance tool
                 latest_budget = db.budgets.find_one(query, sort=[('created_at', -1)])
@@ -80,10 +68,6 @@ def index():
                     'total_shopping_spent': 0.0,
                     'total_shopping_budget': 0.0
                 }
-
-        # Convert ObjectIds to strings for template rendering
-        for item in recent_creditors + recent_debtors + recent_payments + recent_receipts:
-            item['_id'] = str(item['_id'])
 
         return render_template(
             'dashboard/index.html',
