@@ -17,10 +17,6 @@
             <strong>
                 {% if user.role == 'personal' %}
                     {{ t('settings_personal_account', default='Personal Account') }}
-                {% elif user.role == 'trader' %}
-                    {{ t('settings_trader_account', default='Trader Account') }}
-                {% elif user.role == 'agent' %}
-                    {{ t('settings_agent_account', default='Agent Account') }}
                 {% elif user.role == 'admin' %}
                     {{ t('settings_admin_account', default='Admin Account') }}
                 {% endif %}
@@ -36,16 +32,6 @@
                 <i class="bi bi-compass me-2"></i> {{ t('settings_explore_personal_tools', default='Explore Your Personal Finance Tools') }}
             </button>
             <small class="text-muted text-center mt-2">{{ t('settings_explore_personal_description', default='Access budgeting, bill tracking, financial health scoring, and more!') }}</small>
-        {% elif user.role == 'trader' %}
-            <button class="btn btn-primary btn-lg explore-tools-btn" onclick="location.href='{{ url_for('general_bp.home') }}'">
-                <i class="bi bi-briefcase me-2"></i> {{ t('settings_explore_business_tools', default='Explore Your Business Tools') }}
-            </button>
-            <small class="text-muted text-center mt-2">{{ t('settings_explore_business_description', default='Manage debtors, creditors, inventory, payments, and business analytics!') }}</small>
-        {% elif user.role == 'agent' %}
-            <button class="btn btn-primary btn-lg explore-tools-btn" onclick="location.href='{{ url_for('agents_bp.agent_portal') }}'">
-                <i class="bi bi-people me-2"></i> {{ t('settings_explore_agent_tools', default='Explore Your Agent Dashboard') }}
-            </button>
-            <small class="text-muted text-center mt-2">{{ t('settings_explore_agent_description', default='Access your agent dashboard to help users and manage your activities!') }}</small>
         {% elif user.role == 'admin' %}
             <button class="btn btn-primary btn-lg explore-tools-btn" onclick="location.href='{{ url_for('admin.dashboard') }}'">
                 <i class="bi bi-gear me-2"></i> {{ t('settings_explore_admin_tools', default='Explore Admin Dashboard') }}
@@ -125,94 +111,6 @@
                     {{ form.personal_address(placeholder=t('settings_address_placeholder', default='Enter your address')) }}
                     {% if form.personal_address.errors %}
                         {% for error in form.personal_address.errors %}
-                            <p class="text-danger mt-1">{{ error }}</p>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-
-                {% elif user.role == 'trader' %}
-                <hr class="my-4">
-                <h5>{{ t('settings_business_information', default='Business Information') }}</h5>
-                
-                <div class="form-group mb-3">
-                    <label for="business_name" class="form-label">{{ t('settings_business_name', default='Business Name') }}</label>
-                    {{ form.business_name(placeholder=t('settings_business_name_placeholder', default='Your Business Name')) }}
-                    {% if form.business_name.errors %}
-                        {% for error in form.business_name.errors %}
-                            <p class="text-danger mt-1">{{ error }}</p>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-                
-                <div class="form-group mb-3">
-                    <label for="business_address" class="form-label">{{ t('settings_business_address', default='Business Address') }}</label>
-                    {{ form.business_address(placeholder=t('settings_business_address_placeholder', default='Your Business Address')) }}
-                    {% if form.business_address.errors %}
-                        {% for error in form.business_address.errors %}
-                            <p class="text-danger mt-1">{{ error }}</p>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-                
-                <div class="form-group mb-3">
-                    <label for="industry" class="form-label">{{ t('settings_industry', default='Industry') }}</label>
-                    {{ form.industry(placeholder=t('settings_industry_placeholder', default='e.g., Retail, Services, Manufacturing')) }}
-                    {% if form.industry.errors %}
-                        {% for error in form.industry.errors %}
-                            <p class="text-danger mt-1">{{ error }}</p>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="products_services" class="form-label">{{ t('settings_products_services', default='Products/Services') }}</label>
-                    {{ form.products_services(placeholder=t('settings_products_services_placeholder', default='e.g., Clothing, Consulting')) }}
-                    {% if form.products_services.errors %}
-                        {% for error in form.products_services.errors %}
-                            <p class="text-danger mt-1">{{ error }}</p>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-
-                {% elif user.role == 'agent' %}
-                <hr class="my-4">
-                <h5>{{ t('settings_agent_information', default='Agent Information') }}</h5>
-                
-                <div class="form-group mb-3">
-                    <label for="agent_name" class="form-label">{{ t('settings_agent_name', default='Agent Name') }}</label>
-                    {{ form.agent_name(placeholder=t('settings_agent_name_placeholder', default='Enter agent name')) }}
-                    {% if form.agent_name.errors %}
-                        {% for error in form.agent_name.errors %}
-                            <p class="text-danger mt-1">{{ error }}</p>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="agent_id" class="form-label">{{ t('settings_agent_id', default='Agent ID') }}</label>
-                    {{ form.agent_id(placeholder=t('settings_agent_id_placeholder', default='Enter agent ID')) }}
-                    {% if form.agent_id.errors %}
-                        {% for error in form.agent_id.errors %}
-                            <p class="text-danger mt-1">{{ error }}</p>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="area" class="form-label">{{ t('settings_area', default='Area') }}</label>
-                    {{ form.area(placeholder=t('settings_area_placeholder', default='Enter your area')) }}
-                    {% if form.area.errors %}
-                        {% for error in form.area.errors %}
-                            <p class="text-danger mt-1">{{ error }}</p>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="agent_role" class="form-label">{{ t('settings_agent_role', default='Role') }}</label>
-                    {{ form.agent_role(placeholder=t('settings_agent_role_placeholder', default='e.g., Sales Agent, Support Agent')) }}
-                    {% if form.agent_role.errors %}
-                        {% for error in form.agent_role.errors %}
                             <p class="text-danger mt-1">{{ error }}</p>
                         {% endfor %}
                     {% endif %}
