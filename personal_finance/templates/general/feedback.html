@@ -11,16 +11,9 @@
                     <label for="tool_name" class="form-label">{{ t('general_select_tool', default='Select Tool') }} <span class="text-danger">*</span></label>
                     <select name="tool_name" id="tool_name" class="form-select" required>
                         <option value="" disabled selected>{{ t('general_choose_option', default='Choose...') }}</option>
-                        <option value="profile">{{ t('general_profile', default='Profile') }}</option>
-                        <option value="credits">{{ t('credits_dashboard', default='Ficore Credits') }}</option>
-                        <option value="debtors">{{ t('debtors_dashboard', default='Debtors') }}</option>
-                        <option value="creditors">{{ t('creditors_dashboard', default='Creditors') }}</option>
-                        <option value="receipts">{{ t('receipts_dashboard', default='Receipts') }}</option>
-                        <option value="payment">{{ t('payments_dashboard', default='Payments') }}</option>
-                        <option value="report">{{ t('reports_dashboard', default='Reports') }}</option>
                         <option value="budget">{{ t('budget_budget_planner', default='Budget') }}</option>
-                        <option value="bill">{{ t('bill_bill_planner', default='Bill') }}</option>
-                        <option value="taxation">{{ t('taxation_calculator', default='Taxation') }}</option>
+                        <option value="bill">{{ t('bill_bill_planner', default='Bills') }}</option>
+                        <option value="shopping">{{ t('shopping_list', default='Shopping') }}</option>
                     </select>
                     <div class="invalid-feedback">{{ t('general_invalid_tool', default='Please select a valid tool') }}</div>
                 </div>
