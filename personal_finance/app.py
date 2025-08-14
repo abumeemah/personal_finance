@@ -12,7 +12,7 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 from functools import wraps
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING, DESCENDING
 import certifi
 from flask_login import LoginManager, login_required, current_user, UserMixin, logout_user
 from flask_wtf.csrf import CSRFProtect, CSRFError
@@ -174,7 +174,7 @@ def create_app():
             ('bill_reminders', [[('user_id', 1), ('sent_at', -1)], [('notification_id', 1)]]),
             ('shopping_lists', [[('user_id', 1), ('created_at', -1)], [('session_id', 1), ('created_at', -1)]]),
             ('shopping_items', [[('user_id', 1), ('list_id', 1)], [('session_id', 1), ('list_id', 1)]]),
-            ('ficore_credit_transactions', [[('user_id', 1), ('timestamp', -1)]])
+            ('ficore_credit_transactions', [[('user_id', 1), ('timestamp', DESCENDING)]]) # Corrected index for ficore_credit_transactions
         ]:
             for index in indexes:
                 db[collection].create_index(index)
@@ -183,12 +183,16 @@ def create_app():
         admin_email = os.getenv('ADMIN_EMAIL', 'ficoreafrica@gmail.com')
         admin_password = os.getenv('ADMIN_PASSWORD')
         admin_username = os.getenv('ADMIN_USERNAME', 'admin')
+        
+        # Hash the password before checking and updating
+        hashed_password = generate_password_hash(admin_password)
+
         if not get_user_by_email(db, admin_email):
             create_user(db, {
                 '_id': admin_username.lower(),
                 'username': admin_username.lower(),
                 'email': admin_email.lower(),
-                'password': admin_password,
+                'password': hashed_password, # Use the hashed password
                 'is_admin': True,
                 'role': 'admin',
                 'created_at': datetime.utcnow(),
@@ -199,7 +203,7 @@ def create_app():
         else:
             db.users.update_one(
                 {'_id': admin_username.lower()},
-                {'$set': {'password_hash': generate_password_hash(admin_password)}}
+                {'$set': {'password': hashed_password}} # Use 'password' field and hashed password
             )
 
     # Template filters and context processors
