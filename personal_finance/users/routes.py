@@ -23,7 +23,6 @@ users_bp = Blueprint('users', __name__, template_folder='templates/users')
 USERNAME_REGEX = re.compile(r'^[a-zA-Z0-9_]{3,50}$')
 PASSWORD_REGEX = re.compile(r'.{6,}')
 PHONE_REGEX = re.compile(r'^\+?\d{10,15}$')
-AGENT_ID_REGEX = re.compile(r'^[A-Z0-9]{8}$')  # Agent ID: 8 alphanumeric characters
 
 # Custom validator for the login identifier
 def validate_identifier(form, field):
@@ -130,7 +129,6 @@ class PersonalSetupForm(FlaskForm):
     submit = SubmitField(trans('general_save_and_continue', default='Save and Continue'), render_kw={'class': 'btn btn-primary w-100'})
     back = SubmitField(trans('general_back', default='Back'), render_kw={'class': 'btn btn-secondary w-100 mt-2'})
 
-
 def log_audit_action(action, details=None):
     try:
         db = utils.get_mongo_db()
@@ -145,21 +143,24 @@ def log_audit_action(action, details=None):
     except Exception as e:
         logger.error(f"Unexpected error logging audit action '{action}': {str(e)}")
 
-
 def get_setup_wizard_route(role):
     """Get the appropriate setup wizard route based on user role."""
     try:
         if role == 'personal':
             return 'users.personal_setup_wizard'
+        logger.warning(f"Unknown role '{role}' for setup wizard, defaulting to personal setup")
+        return 'users.personal_setup_wizard'
+    except Exception as e:
+        logger.error(f"Error determining setup wizard route for role '{role}': {str(e)}")
+        return 'users.personal_setup_wizard'
 
 def get_post_login_redirect(user_role):
     """Determine where to redirect user after login based on their role."""
     try:
         if user_role == 'personal':
             return url_for('personal.index')
-        else:
-            logger.warning(f"Unknown role '{user_role}' for login redirect, defaulting to home")
-            return url_for('personal.index')
+        logger.warning(f"Unknown role '{user_role}' for login redirect, defaulting to home")
+        return url_for('personal.index')
     except Exception as e:
         logger.error(f"Error determining login redirect for role '{user_role}': {str(e)}")
         return url_for('home')
@@ -169,9 +170,8 @@ def get_explore_tools_redirect(user_role):
     try:
         if user_role == 'personal':
             return url_for('dashboard.index')
-        else:
-            logger.warning(f"Unknown role '{user_role}' for explore tools redirect, defaulting to personal.index")
-            return url_for('home')
+        logger.warning(f"Unknown role '{user_role}' for explore tools redirect, defaulting to personal.index")
+        return url_for('home')
     except Exception as e:
         logger.error(f"Error determining explore tools redirect for role '{user_role}': {str(e)}")
         return url_for('home')
@@ -365,24 +365,11 @@ def signup():
         try:
             username = form.username.data.strip().lower()
             email = form.email.data.strip().lower()
-            role = form.role.data
-            agent_id = form.agent_id.data.strip() if form.agent_id.data else None
             language = form.language.data
-            logger.debug(f"Signup attempt: {username}, {email}, role={role}, agent_id={agent_id}, session_id: {session.get('session_id')}")
-            logger.info(f"Signup attempt: username={username}, email={email}, role={role}, language={language}")
+            logger.debug(f"Signup attempt: {username}, {email}, session_id: {session.get('session_id')}")
+            logger.info(f"Signup attempt: username={username}, email={email}, language={language}")
 
             db = utils.get_mongo_db()
-
-            # Validate agent ID if role is 'agent'
-            if role == 'agent':
-                if not agent_id:
-                    form.agent_id.errors.append(trans('agents_agent_id_required', default='Agent ID is required for Agent role'))
-                    logger.warning(f"Signup failed for {username}: Agent ID is required")
-                    return render_template('users/signup.html', form=form, title=trans('general_signup', lang=session.get('lang', 'en')))
-                if not validate_agent_id(agent_id):
-                    form.agent_id.errors.append(trans('agents_agent_id_invalid', default='Invalid or already used Agent ID'))
-                    logger.warning(f"Signup failed for {username}: Invalid or already used Agent ID {agent_id}")
-                    return render_template('users/signup.html', form=form, title=trans('general_signup', lang=session.get('lang', 'en')))
 
             if db.users.find_one({'_id': username}):
                 flash(trans('general_username_exists', default='Username already exists'), 'danger')
@@ -398,7 +385,7 @@ def signup():
                 '_id': username,
                 'email': email,
                 'password': form.password.data,  # create_user will hash this
-                'role': role,
+                'role': 'personal',
                 'ficore_credit_balance': 10.0,
                 'language': language,
                 'dark_mode': False,
@@ -407,8 +394,6 @@ def signup():
                 'display_name': username,
                 'created_at': datetime.utcnow()
             }
-            if role == 'agent':
-                user_data['agent_details'] = {'agent_id': agent_id}
 
             user_obj = create_user(db, user_data)
 
@@ -423,18 +408,18 @@ def signup():
             db.audit_logs.insert_one({
                 'admin_id': 'system',
                 'action': 'signup',
-                'details': {'user_id': username, 'email': email, 'role': role, 'agent_id': agent_id if role == 'agent' else None},
+                'details': {'user_id': username, 'email': email, 'role': 'personal'},
                 'timestamp': datetime.utcnow()
             })
 
             from app import User
-            user_obj = User(username, email, username, role)
+            user_obj = User(username, email, username, 'personal')
             login_user(user_obj, remember=True)
             session['lang'] = language
             session.pop('is_anonymous', None)
             session['is_anonymous'] = False
-            logger.info(f"New user created and logged in: {username} (role: {role}). Session: {dict(session)}")
-            setup_route = get_setup_wizard_route(role)
+            logger.info(f"New user created and logged in: {username} (role: personal). Session: {dict(session)}")
+            setup_route = get_setup_wizard_route('personal')
             return redirect(url_for(setup_route))
         except errors.PyMongoError as e:
             logger.error(f"MongoDB error during signup for {username}: {str(e)}")
@@ -612,7 +597,6 @@ def personal_setup_wizard():
         logger.error(f"Unexpected error during personal setup for {user_id}: {str(e)}")
         flash(trans('general_error', default='An error occurred. Please try again.'), 'danger')
         return render_template('users/personal_setup.html', form=form, title=trans('general_personal_setup', lang=session.get('lang', 'en'))), 500
-
 
 @users_bp.route('/logout')
 @login_required
