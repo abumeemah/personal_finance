@@ -123,18 +123,6 @@ def get_recent_activities(user_id=None, is_admin_user=False, db=None):
                 # Apply additional filter if specified
                 if 'filter' in config and not config['filter'](record):
                     continue
-                # Log optional fields for food_orders
-                if config['collection'] == 'FoodOrder':
-                    if 'vendor' not in record:
-                        logger.warning(
-                            f"Missing vendor in food order record: {record.get('_id', 'unknown')}",
-                            extra={'session_id': session.get('sid', 'no-session-id'), 'ip_address': request.remote_addr}
-                        )
-                    if 'total_cost' not in record:
-                        logger.warning(
-                            f"Missing total_cost in food order record: {record.get('_id', 'unknown')}",
-                            extra={'session_id': session.get('sid', 'no-session-id'), 'ip_address': request.remote_addr}
-                        )
                 # Validate timestamp format
                 try:
                     timestamp = record.get(config.get('sort_field', 'created_at'), datetime.utcnow())
@@ -326,7 +314,6 @@ def shopping_summary():
             'active_lists': 0,
             'error': trans('shopping_summary_error', default='Error fetching shopping summary', module='shopping')
         }), 500
-
 
 @summaries_bp.route('/ficore_balance')
 @login_required

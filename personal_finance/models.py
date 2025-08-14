@@ -4,6 +4,9 @@ from bson import ObjectId
 import logging
 from translations import trans
 from utils import get_mongo_db, logger
+from werkzeug.security import generate_password_hash
+from functools import lru_cache
+import uuid
 
 # Configure logger for the application
 logger = logging.getLogger('ficore_app')
@@ -796,3 +799,237 @@ def update_bill_reminder(db, reminder_id, update_data):
         logger.error(f"{trans('general_bill_reminder_update_error', default='Error updating bill reminder with ID')} {reminder_id}: {str(e)}", 
                     exc_info=True, extra={'session_id': 'no-session-id'})
         raise
+
+@lru_cache(maxsize=128)
+def get_user(db, user_id):
+    """
+    Get user by ID with caching.
+    
+    Args:
+        db: MongoDB database instance
+        user_id: User ID
+    
+    Returns:
+        User object or None
+    """
+    try:
+        user_doc = db.users.find_one({'_id': user_id})
+        if user_doc:
+            # Convert to object-like structure for compatibility
+            class UserObj:
+                def __init__(self, doc):
+                    for key, value in doc.items():
+                        setattr(self, key, value)
+                    # Ensure ficore_credit_balance is integer
+                    self.ficore_credit_balance = int(doc.get('ficore_credit_balance', 0))
+            return UserObj(user_doc)
+        return None
+    except Exception as e:
+        logger.error(f"Error getting user {user_id}: {str(e)}")
+        return None
+
+@lru_cache(maxsize=128)
+def get_user_by_email(db, email):
+    """
+    Get user by email with caching.
+    
+    Args:
+        db: MongoDB database instance
+        email: User email
+    
+    Returns:
+        User object or None
+    """
+    try:
+        user_doc = db.users.find_one({'email': email.lower()})
+        if user_doc:
+            class UserObj:
+                def __init__(self, doc):
+                    for key, value in doc.items():
+                        setattr(self, key, value)
+                    self.ficore_credit_balance = int(doc.get('ficore_credit_balance', 0))
+            return UserObj(user_doc)
+        return None
+    except Exception as e:
+        logger.error(f"Error getting user by email {email}: {str(e)}")
+        return None
+
+def create_user(db, user_data):
+    """
+    Create a new user in the database.
+    
+    Args:
+        db: MongoDB database instance
+        user_data: Dictionary containing user information
+    
+    Returns:
+        str: ID of the created user
+    """
+    try:
+        # Hash password if provided as plain text
+        if 'password' in user_data:
+            user_data['password_hash'] = generate_password_hash(user_data.pop('password'))
+        
+        # Ensure required fields
+        user_data.setdefault('created_at', datetime.utcnow())
+        user_data.setdefault('ficore_credit_balance', 10)  # Default signup bonus
+        user_data.setdefault('role', 'personal')
+        user_data.setdefault('is_admin', False)
+        user_data.setdefault('setup_complete', False)
+        
+        result = db.users.insert_one(user_data)
+        logger.info(f"Created user with ID: {result.inserted_id}")
+        return str(result.inserted_id)
+    except Exception as e:
+        logger.error(f"Error creating user: {str(e)}")
+        raise
+
+def create_credit_request(db, request_data):
+    """
+    Create a new credit request.
+    
+    Args:
+        db: MongoDB database instance
+        request_data: Dictionary containing request information
+    
+    Returns:
+        str: ID of the created request
+    """
+    try:
+        result = db.credit_requests.insert_one(request_data)
+        logger.info(f"Created credit request with ID: {result.inserted_id}")
+        return str(result.inserted_id)
+    except Exception as e:
+        logger.error(f"Error creating credit request: {str(e)}")
+        raise
+
+def update_credit_request(db, request_id, update_data):
+    """
+    Update a credit request.
+    
+    Args:
+        db: MongoDB database instance
+        request_id: Request ID
+        update_data: Dictionary containing fields to update
+    
+    Returns:
+        bool: True if updated, False otherwise
+    """
+    try:
+        update_data['updated_at'] = datetime.utcnow()
+        result = db.credit_requests.update_one(
+            {'_id': ObjectId(request_id)},
+            {'$set': update_data}
+        )
+        return result.modified_count > 0
+    except Exception as e:
+        logger.error(f"Error updating credit request {request_id}: {str(e)}")
+        return False
+
+def get_credit_requests(db, query):
+    """
+    Get credit requests based on query.
+    
+    Args:
+        db: MongoDB database instance
+        query: MongoDB query
+    
+    Returns:
+        list: List of credit requests
+    """
+    try:
+        return list(db.credit_requests.find(query).sort('created_at', -1))
+    except Exception as e:
+        logger.error(f"Error getting credit requests: {str(e)}")
+        return []
+
+def to_dict_credit_request(record):
+    """Convert credit request record to dictionary."""
+    if not record:
+        return {}
+    return {
+        '_id': str(record.get('_id', '')),
+        'user_id': record.get('user_id', ''),
+        'amount': record.get('amount', 0),
+        'payment_method': record.get('payment_method', ''),
+        'receipt_file_id': str(record.get('receipt_file_id', '')) if record.get('receipt_file_id') else None,
+        'status': record.get('status', ''),
+        'created_at': record.get('created_at'),
+        'updated_at': record.get('updated_at'),
+        'admin_id': record.get('admin_id')
+    }
+
+def get_ficore_credit_transactions(db, query):
+    """
+    Get Ficore Credit transactions based on query.
+    
+    Args:
+        db: MongoDB database instance
+        query: MongoDB query
+    
+    Returns:
+        list: List of transactions
+    """
+    try:
+        return list(db.ficore_credit_transactions.find(query).sort('date', -1))
+    except Exception as e:
+        logger.error(f"Error getting Ficore Credit transactions: {str(e)}")
+        return []
+
+def to_dict_ficore_credit_transaction(record):
+    """Convert Ficore Credit transaction record to dictionary."""
+    if not record:
+        return {}
+    return {
+        '_id': str(record.get('_id', '')),
+        'user_id': record.get('user_id', ''),
+        'amount': record.get('amount', 0),
+        'type': record.get('type', ''),
+        'ref': record.get('ref', ''),
+        'payment_method': record.get('payment_method'),
+        'facilitated_by_agent': record.get('facilitated_by_agent'),
+        'date': record.get('date')
+    }
+
+def create_feedback(db, feedback_data):
+    """
+    Create a new feedback entry.
+    
+    Args:
+        db: MongoDB database instance
+        feedback_data: Dictionary containing feedback information
+    
+    Returns:
+        str: ID of the created feedback
+    """
+    try:
+        result = db.feedback.insert_one(feedback_data)
+        logger.info(f"Created feedback with ID: {result.inserted_id}")
+        return str(result.inserted_id)
+    except Exception as e:
+        logger.error(f"Error creating feedback: {str(e)}")
+        raise
+
+def log_tool_usage(tool_name, db, user_id=None, session_id=None, action=None):
+    """
+    Log tool usage to the database.
+    
+    Args:
+        tool_name: Name of the tool
+        db: MongoDB database instance
+        user_id: User ID (optional)
+        session_id: Session ID (optional)
+        action: Action performed (optional)
+    """
+    try:
+        log_entry = {
+            'tool_name': tool_name,
+            'user_id': user_id,
+            'session_id': session_id,
+            'action': action,
+            'timestamp': datetime.utcnow()
+        }
+        db.tool_usage.insert_one(log_entry)
+        logger.info(f"Logged tool usage: {tool_name} by user {user_id}")
+    except Exception as e:
+        logger.error(f"Error logging tool usage: {str(e)}")

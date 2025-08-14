@@ -10,6 +10,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
+from werkzeug.routing import BuildError
 from translations import trans
 import time
 from wtforms import ValidationError
@@ -1036,6 +1037,65 @@ def get_all_recent_activities(user_id=None, is_admin_user=False, db=None, sessio
     """
     return get_recent_activities(user_id, is_admin_user, db, session_id, limit)
 
+def check_ficore_credit_balance(required_amount=1, user_id=None):
+    """
+    Check if user has sufficient Ficore Credits.
+    
+    Args:
+        required_amount: Amount of credits required (default: 1)
+        user_id: User ID (optional, uses current_user if not provided)
+    
+    Returns:
+        bool: True if user has sufficient credits, False otherwise
+    """
+    try:
+        from flask_login import current_user
+        if user_id is None and current_user.is_authenticated:
+            user_id = current_user.id
+        if not user_id:
+            return False
+        
+        db = get_mongo_db()
+        user = db.users.find_one({'_id': user_id})
+        if not user:
+            return False
+        
+        current_balance = int(user.get('ficore_credit_balance', 0))
+        return current_balance >= required_amount
+    except Exception as e:
+        logger.error(f"Error checking Ficore Credit balance: {str(e)}")
+        return False
+
+def send_sms_reminder(phone, message):
+    """
+    Send SMS reminder (placeholder implementation).
+    
+    Args:
+        phone: Phone number
+        message: SMS message
+    
+    Returns:
+        tuple: (success, response)
+    """
+    # Placeholder implementation - replace with actual SMS service
+    logger.info(f"SMS reminder sent to {phone}: {message}")
+    return True, {'status': 'sent'}
+
+def send_whatsapp_reminder(phone, message):
+    """
+    Send WhatsApp reminder (placeholder implementation).
+    
+    Args:
+        phone: Phone number
+        message: WhatsApp message
+    
+    Returns:
+        tuple: (success, response)
+    """
+    # Placeholder implementation - replace with actual WhatsApp service
+    logger.info(f"WhatsApp reminder sent to {phone}: {message}")
+    return True, {'status': 'sent'}
+
 # Export all functions and variables
 __all__ = [
     'login_manager', 'clean_currency', 'log_tool_usage', 'flask_session', 'csrf', 'limiter',
@@ -1046,5 +1106,6 @@ __all__ = [
     'log_user_action', 'initialize_tools_with_urls',
     'PERSONAL_TOOLS', 'PERSONAL_NAV', 'PERSONAL_EXPLORE_FEATURES',
     'ADMIN_TOOLS', 'ADMIN_NAV', 'ADMIN_EXPLORE_FEATURES', 'ALL_TOOLS', 'get_explore_features',
-    'get_recent_activities', 'get_all_recent_activities'
+    'get_recent_activities', 'get_all_recent_activities', 'check_ficore_credit_balance',
+    'send_sms_reminder', 'send_whatsapp_reminder'
 ]

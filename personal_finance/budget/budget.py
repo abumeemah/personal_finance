@@ -4,7 +4,7 @@ from flask_wtf.csrf import CSRFProtect, CSRFError
 from wtforms import FloatField, IntegerField, SubmitField
 from wtforms.validators import DataRequired, NumberRange, ValidationError
 from flask_login import current_user, login_required
-from utils import get_all_recent_activities, requires_role, is_admin, get_mongo_db, limiter, check_ficore_credit_balance
+import utils
 from datetime import datetime
 import re
 from translations import trans
@@ -189,8 +189,8 @@ class BudgetForm(FlaskForm):
 
 @budget_bp.route('/main', methods=['GET', 'POST'])
 @custom_login_required
-@requires_role(['personal', 'admin'])
-@limiter.limit("10 per minute")
+@utils.requires_role(['personal', 'admin'])
+@utils.limiter.limit("10 per minute")
 def main():
     if 'sid' not in session:
         create_anonymous_session()
@@ -199,7 +199,7 @@ def main():
     session.permanent = True
     session.modified = True
     form = BudgetForm()
-    db = get_mongo_db()
+    db = utils.get_mongo_db()
 
     valid_tabs = ['create-budget', 'dashboard']
     active_tab = request.args.get('tab', 'create-budget')
@@ -219,7 +219,7 @@ def main():
         flash(trans('budget_log_error', default='Error logging budget activity. Please try again.'), 'warning')
 
     try:
-        activities = get_all_recent_activities(
+        activities = utils.get_all_recent_activities(
             db=db,
             user_id=current_user.id if current_user.is_authenticated else None,
             session_id=session.get('sid', 'unknown') if not current_user.is_authenticated else None,
@@ -231,12 +231,12 @@ def main():
         activities = []
 
     try:
-        filter_criteria = {} if is_admin() else {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
+        filter_criteria = {} if utils.is_admin() else {'user_id': current_user.id} if current_user.is_authenticated else {'session_id': session['sid']}
         if request.method == 'POST':
             action = request.form.get('action')
             if action == 'create_budget' and form.validate_on_submit():
-                if current_user.is_authenticated and not is_admin():
-                    if not check_ficore_credit_balance(required_amount=1, user_id=current_user.id):
+                if current_user.is_authenticated and not utils.is_admin():
+                    if not utils.check_ficore_credit_balance(required_amount=1, user_id=current_user.id):
                         current_app.logger.warning(f"Insufficient Ficore Credits for creating budget by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
                         flash(trans('budget_insufficient_credits', default='Insufficient Ficore Credits to create a budget. Please purchase more credits.'), 'danger')
                         return redirect(url_for('dashboard.index'))
@@ -285,7 +285,7 @@ def main():
                 current_app.logger.debug(f"Saving budget data: {budget_data}", extra={'session_id': session['sid']})
                 try:
                     db.budgets.insert_one(budget_data)
-                    if current_user.is_authenticated and not is_admin():
+                    if current_user.is_authenticated and not utils.is_admin():
                         if not deduct_ficore_credits(db, current_user.id, 1, 'create_budget', budget_id):
                             db.budgets.delete_one({'_id': budget_id})  # Rollback on failure
                             current_app.logger.error(f"Failed to deduct Ficore Credit for creating budget {budget_id} by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
@@ -344,8 +344,8 @@ def main():
                     current_app.logger.warning(f"Budget {budget_id} not found for deletion", extra={'session_id': session.get('sid', 'unknown')})
                     flash(trans("budget_not_found", default='Budget not found.'), "danger")
                     return redirect(url_for('budget.main', tab='dashboard'))
-                if current_user.is_authenticated and not is_admin():
-                    if not check_ficore_credit_balance(required_amount=1, user_id=current_user.id):
+                if current_user.is_authenticated and not utils.is_admin():
+                    if not utils.check_ficore_credit_balance(required_amount=1, user_id=current_user.id):
                         current_app.logger.warning(f"Insufficient Ficore Credits for deleting budget {budget_id} by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
                         flash(trans('budget_insufficient_credits', default='Insufficient Ficore Credits to delete a budget. Please purchase more credits.'), 'danger')
                         return redirect(url_for('dashboard.index'))
@@ -359,7 +359,7 @@ def main():
                     )
                     result = db.budgets.delete_one({'_id': ObjectId(budget_id), **filter_criteria})
                     if result.deleted_count > 0:
-                        if current_user.is_authenticated and not is_admin():
+                        if current_user.is_authenticated and not utils.is_admin():
                             if not deduct_ficore_credits(db, current_user.id, 1, 'delete_budget', budget_id):
                                 current_app.logger.error(f"Failed to deduct Ficore Credit for deleting budget {budget_id} by user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})
                                 flash(trans('budget_credit_deduction_failed', default='Failed to deduct Ficore Credit for deleting budget.'), 'danger')
@@ -532,10 +532,10 @@ def main():
 
 @budget_bp.route('/summary')
 @login_required
-@requires_role(['personal', 'admin'])
-@limiter.limit("5 per minute")
+@utils.requires_role(['personal', 'admin'])
+@utils.limiter.limit("5 per minute")
 def summary():
-    db = get_mongo_db()
+    db = utils.get_mongo_db()
     try:
         log_tool_usage(
             tool_name='budget',
@@ -544,7 +544,7 @@ def summary():
             session_id=session.get('sid', 'unknown'),
             action='summary_view'
         )
-        filter_criteria = {} if is_admin() else {'user_id': current_user.id}
+        filter_criteria = {} if utils.is_admin() else {'user_id': current_user.id}
         latest_budget = db.budgets.find_one(filter_criteria, sort=[('created_at', -1)])
         if not latest_budget:
             current_app.logger.info(f"No budget found for user {current_user.id}", extra={'session_id': session.get('sid', 'unknown')})

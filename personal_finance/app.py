@@ -28,10 +28,10 @@ from reports.routes import reports_bp
 from settings.routes import settings_bp
 from general.routes import general_bp
 from admin.routes import admin_bp
-from bill import bill_bp
-from budget import budget_bp
-import summaries_bp
-from shopping import shopping_bp
+from bill.bill import bill_bp
+from budget.budget import budget_bp
+from summaries.routes import summaries_bp
+from shopping.shopping import shopping_bp
 
 # Load environment variables
 load_dotenv()
@@ -142,7 +142,9 @@ def create_app():
     # Initialize data
     with app.app_context():
         initialize_app_data(app)
-        initialize_tax_data(app.extensions['mongo']['ficodb'], utils.trans)
+        
+        # Initialize tools with URLs
+        utils.initialize_tools_with_urls(app)
         
         # Create indexes
         db = app.extensions['mongo']['ficodb']
@@ -150,8 +152,9 @@ def create_app():
             ('bills', [[('user_id', 1), ('due_date', 1)], [('session_id', 1), ('due_date', 1)], [('created_at', -1)], [('due_date', 1)], [('status', 1)]]),
             ('budgets', [[('user_id', 1), ('created_at', -1)], [('session_id', 1), ('created_at', -1)], [('created_at', -1)]]),
             ('bill_reminders', [[('user_id', 1), ('sent_at', -1)], [('notification_id', 1)]]),
-            ('records', [[('user_id', 1), ('type', 1), ('created_at', -1)]]),
-            ('cashflows', [[('user_id', 1), ('type', 1), ('created_at', -1)]])
+            ('shopping_lists', [[('user_id', 1), ('created_at', -1)], [('session_id', 1), ('created_at', -1)]]),
+            ('shopping_items', [[('user_id', 1), ('list_id', 1)], [('session_id', 1), ('list_id', 1)]]),
+            ('ficore_credit_transactions', [[('user_id', 1), ('timestamp', -1)]])
         ]:
             for index in indexes:
                 db[collection].create_index(index)
@@ -194,7 +197,7 @@ def create_app():
 
     # Template filters and context processors
     app.jinja_env.globals.update(
-        trans=utils.trans,
+        trans=utils.trans_function,
         is_admin=utils.is_admin,
         FACEBOOK_URL=app.config.get('FACEBOOK_URL', 'https://facebook.com/ficoreafrica'),
         TWITTER_URL=app.config.get('TWITTER_URL', 'https://x.com/ficoreafrica'),
@@ -223,13 +226,37 @@ def create_app():
     @app.context_processor
     def inject_globals():
         lang = session.get('lang', 'en')
+        from flask_login import current_user
+        
+        # Get role-specific navigation and tools
+        if current_user.is_authenticated:
+            if current_user.role == 'personal':
+                tools_for_template = utils.PERSONAL_TOOLS
+                explore_features_for_template = utils.PERSONAL_EXPLORE_FEATURES
+                bottom_nav_items = utils.PERSONAL_NAV
+            elif current_user.role == 'admin':
+                tools_for_template = utils.ADMIN_TOOLS
+                explore_features_for_template = utils.ADMIN_EXPLORE_FEATURES
+                bottom_nav_items = utils.ADMIN_NAV
+            else:
+                tools_for_template = []
+                explore_features_for_template = []
+                bottom_nav_items = []
+        else:
+            tools_for_template = []
+            explore_features_for_template = utils.get_explore_features()
+            bottom_nav_items = []
+        
         return {
-            'trans': utils.trans,
+            'trans': utils.trans_function,
             'current_lang': lang,
             'available_languages': [
-                {'code': code, 'name': utils.trans(f'lang_{code}', lang=lang, default=code.capitalize())}
+                {'code': code, 'name': utils.trans_function(f'lang_{code}', lang=lang, default=code.capitalize())}
                 for code in app.config['SUPPORTED_LANGUAGES']
-            ]
+            ],
+            'tools_for_template': tools_for_template,
+            'explore_features_for_template': explore_features_for_template,
+            'bottom_nav_items': bottom_nav_items
         }
 
     # Routes
@@ -253,8 +280,20 @@ def create_app():
                     {'_id': current_user.id},
                     {'$set': {'language': new_lang}}
                 )
-            return jsonify({'success': True, 'message': utils.trans('lang_change_success', lang=new_lang)})
-        return jsonify({'success': False, 'message': utils.trans('lang_invalid')}), 400
+            return jsonify({'success': True, 'message': utils.trans_function('lang_change_success', lang=new_lang)})
+        return jsonify({'success': False, 'message': utils.trans_function('lang_invalid')}), 400
+
+    @app.route('/set-language/<lang>')
+    def set_language(lang):
+        """Set the session language."""
+        if lang in app.config['SUPPORTED_LANGUAGES']:
+            session['lang'] = lang
+            if current_user.is_authenticated:
+                app.extensions['mongo']['ficodb'].users.update_one(
+                    {'_id': current_user.id},
+                    {'$set': {'language': lang}}
+                )
+        return redirect(request.referrer or url_for('index'))
 
     @app.route('/health')
     def health():
@@ -267,17 +306,17 @@ def create_app():
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
         return render_template(
-            'error/403.html',
-            error=utils.trans('csrf_error'),
-            title=utils.trans('csrf_error', lang=session.get('lang', 'en'))
+            'errors/403.html',
+            error=utils.trans_function('csrf_error'),
+            title=utils.trans_function('csrf_error', lang=session.get('lang', 'en'))
         ), 400
 
     @app.errorhandler(404)
     def page_not_found(e):
         return render_template(
-            'general/404.html',
+            'errors/404.html',
             error=str(e),
-            title=utils.trans('not_found', lang=session.get('lang', 'en'))
+            title=utils.trans_function('not_found', lang=session.get('lang', 'en'))
         ), 404
 
     return app
