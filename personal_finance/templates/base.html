@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ t('general_app_description', default='FiCore Africa: Empowering financial growth across Africa') | e }}">
-    <meta name="keywords" content="{% if current_user.is_authenticated and current_user.role == 'personal' %}personal finance, budgeting, savings, ficore credits, financial planning, Africa{% else %}business finance, inventory management, ficore credits, debtors, creditors, Africa{% endif %}">
+    <meta name="keywords" content="{% if current_user.is_authenticated and current_user.role == 'personal' %}personal finance, budgeting, savings, ficore credits, financial planning, Africa{% else %}personal finance, inventory management, ficore credits, debtors, creditors, Africa{% endif %}">
     <meta name="author" content="FiCore">
     <meta name="csrf-token" content="{{ csrf_token() | e }}">
     <meta name="robots" content="index, follow">
@@ -446,7 +446,7 @@
                     {% if current_user.role == 'personal' %}
                         '{{ url_for("summaries.notification_count") | e }}'
                     {% else %}
-                        '{{ url_for("business.notification_count") | e }}'
+                        '{{ url_for("summaries.notification_count") | e }}'
                     {% endif %}
                 {% else %}
                     '';
@@ -482,7 +482,7 @@
                     {% if current_user.role == 'personal' %}
                         '{{ url_for("summaries.notifications") | e }}'
                     {% else %}
-                        '{{ url_for("business.notifications") | e }}'
+                        '{{ url_for("summaries.notifications") | e }}'
                     {% endif %}
                 {% else %}
                     '';
