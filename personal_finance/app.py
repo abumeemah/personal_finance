@@ -213,6 +213,8 @@ def create_app():
         trans=utils.trans_function,
         t=utils.trans_function,  # Ensure 't' is available in Jinja templates
         is_admin=utils.is_admin,
+        format_currency=utils.format_currency,
+        format_date=utils.format_date,
         FACEBOOK_URL=app.config.get('FACEBOOK_URL', 'https://facebook.com/ficoreafrica'),
         TWITTER_URL=app.config.get('TWITTER_URL', 'https://x.com/ficoreafrica'),
         LINKEDIN_URL=app.config.get('LINKEDIN_URL', 'https://linkedin.com/company/ficoreafrica')
