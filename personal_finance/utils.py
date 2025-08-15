@@ -479,6 +479,7 @@ def create_anonymous_session():
                 return
             time.sleep(0.5)
 
+
 def clean_currency(value, max_value=10000000000):
     """
     Clean currency input by removing non-numeric characters, handling various currency formats and edge cases.
@@ -502,82 +503,78 @@ def clean_currency(value, max_value=10000000000):
             )
             return 0.0
 
-        # Handle numeric inputs (int or float)
+        # Handle numeric inputs (int or float) directly
         if isinstance(value, (int, float)):
-            value = float(value)
-            if value > max_value:
+            result = float(value)
+            if result > max_value:
                 logger.warning(
-                    f"Currency value exceeds maximum: value={value}, max_value={max_value}",
+                    f"Currency value exceeds maximum: value={result}, max_value={max_value}",
                     extra={'session_id': session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'}
                 )
                 raise ValidationError(trans('bill_amount_max', default=f"Input cannot exceed {max_value:,}", lang=get_user_language()))
-            return value
+            return result
 
-        # Convert to string and normalize
+        # Convert to string and use a single regex to remove all non-digit, non-decimal-point, non-negative-sign characters
         value_str = str(value).strip()
         logger.debug(
             f"clean_currency processing input: '{value_str}'",
             extra={'session_id': session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'}
         )
-
-        # Remove currency symbols and formatting characters (e.g., commas, spaces)
-        cleaned = re.sub(r'[^\d.]', '', value_str.replace('NGN', '').replace('₦', '').replace('$', '').replace('€', '').replace('£', '').replace(',', ''))
-
-        # Handle multiple decimal points
-        parts = cleaned.split('.')
-        if len(parts) > 2:
+        
+        # Remove currency symbols and formatting characters, keeping digits, decimal, and potential negative sign
+        cleaned = re.sub(r'[^\d.-]', '', value_str)
+        
+        # Correctly handle multiple decimal points and multiple negative signs
+        if cleaned.count('.') > 1:
+            parts = cleaned.split('.')
             cleaned = parts[0] + '.' + ''.join(parts[1:])
-
-        # Validate the cleaned string
-        if not cleaned or cleaned == '.':
+        
+        # Ensure negative sign is only at the beginning
+        if cleaned.count('-') > 1 or (cleaned.count('-') == 1 and not cleaned.startswith('-')):
+            cleaned = cleaned.replace('-', '')
+        
+        if not cleaned or cleaned == '.' or cleaned == '-':
             logger.warning(
                 f"Invalid currency format after cleaning: original='{value_str}', cleaned='{cleaned}'",
                 extra={'session_id': session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'}
             )
             raise ValidationError(trans('invalid_currency_format', default='Invalid currency format', lang=get_user_language()))
-
-        # Check for valid numeric format
-        if cleaned.count('.') > 1 or cleaned.count('-') > 1 or (cleaned.count('-') == 1 and not cleaned.startswith('-')):
-            logger.warning(
-                f"Invalid currency format: original='{value_str}', cleaned='{cleaned}', multiple decimals or misplaced negative sign",
-                extra={'session_id': session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'}
-            )
-            raise ValidationError(trans('invalid_currency_format', default='Invalid currency format', lang=get_user_language()))
-
+            
         # Convert to float
-        try:
-            result = float(cleaned)
-            if result < 0:
-                logger.warning(
-                    f"Negative currency value not allowed: original='{value_str}', cleaned='{cleaned}', result={result}",
-                    extra={'session_id': session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'}
-                )
-                raise ValidationError(trans('negative_currency_not_allowed', default='Negative currency values are not allowed', lang=get_user_language()))
-            if result > max_value:
-                logger.warning(
-                    f"Currency value exceeds maximum: original='{value_str}', cleaned='{cleaned}', result={result}, max_value={max_value}",
-                    extra={'session_id': session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'}
-                )
-                raise ValidationError(trans('bill_amount_max', default=f"Input cannot exceed {max_value:,}", lang=get_user_language()))
-            logger.debug(
-                f"clean_currency successfully processed '{value_str}' to {result}",
-                extra={'session_id': session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'}
-            )
-            return result
-        except ValueError as e:
+        result = float(cleaned)
+        
+        if result < 0:
             logger.warning(
-                f"Currency format error: original='{value_str}', cleaned='{cleaned}', error='{str(e)}'",
+                f"Negative currency value not allowed: original='{value_str}', result={result}",
                 extra={'session_id': session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'}
             )
-            raise ValidationError(trans('invalid_currency_format', default='Invalid currency format', lang=get_user_language()))
-    except ValidationError as e:
-        raise  # Re-raise ValidationError for form validation
+            raise ValidationError(trans('negative_currency_not_allowed', default='Negative currency values are not allowed', lang=get_user_language()))
+        
+        if result > max_value:
+            logger.warning(
+                f"Currency value exceeds maximum: original='{value_str}', result={result}, max_value={max_value}",
+                extra={'session_id': session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'}
+            )
+            raise ValidationError(trans('bill_amount_max', default=f"Input cannot exceed {max_value:,}", lang=get_user_language()))
+
+        logger.debug(
+            f"clean_currency successfully processed '{value_str}' to {result}",
+            extra={'session_id': session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'}
+        )
+        return result
+
+    except (ValueError, ValidationError) as e:
+        logger.warning(
+            f"Currency format error: original='{value}', error='{str(e)}'",
+            extra={'session_id': session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'}
+        )
+        raise ValidationError(trans('invalid_currency_format', default='Invalid currency format', lang=get_user_language())) from e
     except Exception as e:
         logger.error(
             f"Unexpected error in clean_currency for value '{value}': {str(e)}",
             extra={'session_id': session.get('sid', 'no-session-id') if has_request_context() else 'no-session-id'}
         )
-        raise ValidationError(trans('invalid_currency_format', default='Invalid currency format', lang=get_user_language()))
+        raise ValidationError(trans('invalid_currency_format', default='Invalid currency format', lang=get_user_language())) from e
 
 def trans_function(key, lang=None, **kwargs):
     """
