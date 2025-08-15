@@ -1,10 +1,10 @@
 <div class="row mb-3">
     <div class="col-md-6">
         <h5>{{ t('shopping_list_details', default='List Details') | e }}: {{ selected_list.name | e }}</h5>
-        <p><strong>{{ t('general_created', default='Created') | e }}:</strong> {{ format_datetime(selected_list.created_at) | e }}</p>
-        <p><strong>{{ t('general_budget', default='Budget') | e }}:</strong> <span id="budget-display">{{ selected_list.budget | e }}</span></p>
-        <p><strong>{{ t('general_total_spent', default='Total Spent') | e }}:</strong> <span id="total-spent">{{ selected_list.total_spent | e }}</span></p>
-        <p><strong>{{ t('general_remaining', default='Remaining') | e }}:</strong> <span id="remaining-budget">{{ format_currency(selected_list.budget_raw - selected_list.total_spent_raw) | e }}</span></p>
+        <p><strong>{{ t('general_created', default='Created') | e }}:</strong> {{ selected_list.created_at | format_date | e }}</p>
+        <p><strong>{{ t('general_budget', default='Budget') | e }}:</strong> <span id="budget-display">{{ selected_list.budget_raw | format_currency | e }}</span></p>
+        <p><strong>{{ t('general_total_spent', default='Total Spent') | e }}:</strong> <span id="total-spent">{{ selected_list.total_spent_raw | format_currency | e }}</span></p>
+        <p><strong>{{ t('general_remaining', default='Remaining') | e }}:</strong> <span id="remaining-budget">{{ (selected_list.budget_raw - selected_list.total_spent_raw) | format_currency | e }}</span></p>
         <p><strong>{{ t('general_status', default='Status') | e }}:</strong> {{ t(selected_list.status, default=selected_list.status) | e }}</p>
         <p><strong>{{ t('general_collaborators', default='Collaborators') | e }}:</strong> {{ selected_list.collaborators | join(', ') | e or t('general_none', default='None') | e }}</p>
     </div>
@@ -19,7 +19,7 @@
             </div>
             <div class="mb-3">
                 <label for="list_budget" class="form-label">{{ t('shopping_budget', default='Budget') | e }}</label>
-                <input type="text" name="list_budget" id="list_budget" class="form-control number-input" data-allow-commas="true" value="{{ selected_list.budget_raw | e }}" required>
+                <input type="text" name="list_budget" id="list_budget" class="form-control number-input" data-allow-commas="true" value="{{ selected_list.budget_raw | string | replace(',', '') | e }}" required>
                 <div class="invalid-feedback">{{ t('shopping_budget_required', default='Budget is required') | e }}</div>
             </div>
             <button type="submit" class="btn btn-primary">
@@ -53,7 +53,7 @@
                         <tr data-item-id="{{ item.id | e }}">
                             <td>{{ item.name | e }}</td>
                             <td>{{ item.quantity | e }}</td>
-                            <td><span class="formatted-price">{{ format_currency(item.price) | e }}</span></td>
+                            <td><span class="formatted-price">{{ item.price_raw | format_currency | e }}</span></td>
                             <td>{{ t(item.unit, default=item.unit) | e }}</td>
                             <td>{{ t(item.category, default=item.category) | e }}</td>
                             <td>{{ t(item.status, default=item.status) | e }}</td>
@@ -64,13 +64,13 @@
                                     data-id="{{ item.id | e }}"
                                     data-name="{{ item.name | e }}"
                                     data-quantity="{{ item.quantity | e }}"
-                                    data-price="{{ item.price_raw | e }}"
+                                    data-price="{{ item.price_raw | string | replace(',', '') | e }}"
                                     data-unit="{{ item.unit | e }}"
                                     data-category="{{ item.category | e }}"
                                     data-status="{{ item.status | e }}"
                                     data-store="{{ item.store | e }}"
                                     data-frequency="{{ item.frequency | e }}"
-                                    onclick="openEditModal('{{ item.id | e }}', '{{ item.name | e }}', {{ item.quantity | e }}, '{{ item.price_raw | e }}', '{{ item.unit | e }}', '{{ item.category | e }}', '{{ item.status | e }}', '{{ item.store | e }}', {{ item.frequency | e }})">
+                                    onclick="openEditModal('{{ item.id | e }}', '{{ item.name | e }}', {{ item.quantity | e }}, '{{ item.price_raw | string | replace(',', '') | e }}', '{{ item.unit | e }}', '{{ item.category | e }}', '{{ item.status | e }}', '{{ item.store | e }}', {{ item.frequency | e }})">
                                     {{ t('general_edit', default='Edit') | e }}
                                 </button>
                                 <form method="POST" action="{{ url_for('shopping.manage_list', list_id=selected_list.id) | e }}" style="display:inline;" class="delete-item-form">
