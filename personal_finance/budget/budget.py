@@ -298,7 +298,7 @@ def main():
                     current_app.logger.error(f"Failed to save budget {budget_id} to MongoDB for session {session['sid']}: {str(e)}", extra={'session_id': session['sid']})
                     flash(trans("budget_storage_error", default='Error saving budget.'), "danger")
                     return render_template(
-                        'budget_main.html',
+                        'budget/budget_main.html',
                         form=form,
                         budgets={},
                         latest_budget={
@@ -475,7 +475,7 @@ def main():
         current_app.logger.debug(f"Latest budget: {latest_budget}", extra={'session_id': session.get('sid', 'unknown')})
         current_app.logger.debug(f"Categories: {categories}", extra={'session_id': session.get('sid', 'unknown')})
         return render_template(
-            'budget_main.html',
+            'budget/budget_main.html',
             form=form,
             budgets=budgets_dict,
             latest_budget=latest_budget,
@@ -490,7 +490,7 @@ def main():
         current_app.logger.exception(f"Unexpected error in budget.main active_tab: {active_tab}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans('budget_dashboard_load_error', default='Error loading budget dashboard.'), 'danger')
         return render_template(
-            'budget_main.html',
+            'budget/budget_main.html',
             form=form,
             budgets={},
             latest_budget={
