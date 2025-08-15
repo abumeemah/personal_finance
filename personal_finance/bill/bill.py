@@ -775,7 +775,7 @@ def main():
         if total_overdue > total_bills * 0.3:
             insights.append(trans('bill_insight_high_overdue', default='Overdue bills exceed 30% of total bills. Prioritize clearing overdue amounts.'))
         return render_template(
-            'bill_main.html',
+            'bill/bill_main.html',
             form=form,
             bills_data=bills_data,
             edit_forms=edit_forms,
@@ -802,7 +802,7 @@ def main():
         current_app.logger.error(f"Error in bill.main: {str(e)}", extra={'session_id': session.get('sid', 'unknown')})
         flash(trans('bill_dashboard_load_error', default='Error loading bill dashboard.'), 'danger')
         return render_template(
-            'bill_main.html',
+            'bill/bill_main.html',
             form=form,
             bills_data=[],
             edit_forms={},
