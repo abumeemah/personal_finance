@@ -207,9 +207,9 @@ def budget_summary():
         latest_budget = get_budgets(db, filter_criteria)
         if latest_budget:
             latest_budget = latest_budget[0]
-            income = float(latest_budget.get('income', 0.0))
-            fixed_expenses = float(latest_budget.get('fixed_expenses', 0.0))
-            variable_expenses = float(latest_budget.get('variable_expenses', 0.0))
+            income = parse_currency(latest_budget.get('income', 0.0))
+            fixed_expenses = parse_currency(latest_budget.get('fixed_expenses', 0.0))
+            variable_expenses = parse_currency(latest_budget.get('variable_expenses', 0.0))
             total_budget = income - (fixed_expenses + variable_expenses)
         else:
             total_budget = 0.0
@@ -241,7 +241,7 @@ def bill_summary():
                 due_date = bill.get('due_date')
                 if isinstance(due_date, str):
                     due_date = datetime.strptime(due_date, '%Y-%m-%d').date()
-                amount = float(bill.get('amount', 0))
+                amount = parse_currency(bill.get('amount', 0))
                 status = bill.get('status', 'unpaid')
                 
                 if status in ['unpaid', 'pending', 'overdue']:
@@ -323,7 +323,7 @@ def ficore_balance():
     try:
         db = get_mongo_db()
         user = db.users.find_one({'_id': current_user.id})
-        balance = float(user.get('ficore_credit_balance', 0))
+        balance = parse_currency(user.get('ficore_credit_balance', 0))
         logger.info(f"Fetched Ficore Credits balance for user {current_user.id}: {balance}", 
                     extra={'session_id': session.get('sid', 'no-session-id'), 'ip_address': request.remote_addr})
         return jsonify({'balance': balance}), 200
