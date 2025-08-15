@@ -416,7 +416,7 @@ def main():
                     for error in field_errors:
                         flash(f"{field.capitalize()}: {trans(error, default=error)}", 'danger')
                 return render_template(
-                    'personal/SHOPPING/shopping_create_list.html',
+                    'shopping/create_list.html',
                     list_form=list_form,
                     item_form=item_form,
                     share_form=share_form,
@@ -691,10 +691,10 @@ def main():
             insights.append(trans('shopping_insight_under_budget', default='You are under budget. Consider allocating funds to savings.'))
 
     template_map = {
-        'create-list': 'personal/SHOPPING/shopping_create_list.html',
-        'add-items': 'personal/SHOPPING/shopping_add_items.html',
-        'view-lists': 'personal/SHOPPING/shopping_view_lists.html',
-        'manage-list': 'personal/SHOPPING/shopping_manage_list.html'
+        'create-list': 'shopping/create_list.html',
+        'add-items': 'shopping/add_items.html',
+        'view-lists': 'shopping/view_lists.html',
+        'manage-list': 'shopping/manage_list.html'
     }
 
     if active_tab == 'manage-list' and selected_list.get('name'):
@@ -764,7 +764,7 @@ def get_list_details():
     
     try:
         html = render_template(
-            'personal/SHOPPING/manage_list_details.html',
+            'shopping/manage_list_details.html',
             list_form=ShoppingListForm(data={'name': selected_list['name'], 'budget': selected_list['budget_raw']}),
             item_form=ShoppingItemsForm(),
             selected_list=selected_list,
@@ -1000,7 +1000,7 @@ def manage_list(list_id):
                 insights.append(trans('shopping_insight_under_budget', default='You are under budget. Consider allocating funds to savings.'))
 
         return render_template(
-            'personal/SHOPPING/shopping_manage_list.html',
+            'shopping/manage_list.html',
             list_form=ShoppingListForm(data={'name': selected_list['name'], 'budget': selected_list['budget_raw']}),
             item_form=ShoppingItemsForm(),
             share_form=ShareListForm(),
