@@ -1,14 +1,12 @@
 from datetime import datetime
 from pymongo import ASCENDING, DESCENDING
 from bson import ObjectId
-from pymongo.errors import DuplicateKeyError, OperationFailure, PyMongoError
+from pymongo.errors import DuplicateKeyError, OperationFailure, PyMongoError, WriteError
 from translations import trans
-from utils import get_mongo_db, logger # Assuming utils.logger is the main logger
+from utils import get_mongo_db, logger
 from werkzeug.security import generate_password_hash
 from functools import lru_cache
 import uuid
-
-# The logger is now assumed to be configured in utils.py, so we remove the local config.
 
 def get_db():
     """
@@ -43,7 +41,6 @@ def initialize_app_data(app):
             
             # Define collection schemas for bill, shopping, and budget
             collection_schemas = {
-                # SIMPLIFIED THE USER SCHEMA FOR MONGO DB VERSIONS < 4.2
                 'users': {
                     'validator': {
                         '$jsonSchema': {
@@ -63,26 +60,27 @@ def initialize_app_data(app):
                     'validator': {
                         '$jsonSchema': {
                             'bsonType': 'object',
-                            'required': ['user_id', 'session_id', 'list_id', 'name', 'quantity', 'price', 'category', 'status', 'created_at', 'updated_at', 'unit'],
+                            'required': ['list_id', 'name', 'quantity', 'price', 'category', 'status', 'created_at', 'updated_at', 'unit', 'session_id'],
                             'properties': {
                                 'user_id': {'bsonType': ['string', 'null']},
                                 'session_id': {'bsonType': 'string'},
                                 'list_id': {'bsonType': 'string'},
                                 'name': {'bsonType': 'string'},
-                                'quantity': {'bsonType': 'int', 'minimum': 1},
-                                'price': {'bsonType': 'double', 'minimum': 0},
+                                'quantity': {'bsonType': 'int', 'minimum': 1, 'maximum': 1000},
+                                'price': {'bsonType': 'double', 'minimum': 0, 'maximum': 1000000},
                                 'category': {'enum': ['fruits', 'vegetables', 'dairy', 'meat', 'grains', 'beverages', 'household', 'other']},
                                 'status': {'enum': ['to_buy', 'bought']},
                                 'created_at': {'bsonType': 'date'},
                                 'updated_at': {'bsonType': 'date'},
                                 'store': {'bsonType': ['string', 'null']},
-                                'frequency': {'bsonType': 'int', 'minimum': 1},
-                                'unit': {'bsonType': 'string', 'enum': ['piece', 'kg', 'liter', 'pack', 'unit', 'other']}
+                                'frequency': {'bsonType': 'int', 'minimum': 1, 'maximum': 365},
+                                'unit': {'bsonType': 'string', 'enum': ['piece', 'carton', 'kg', 'liter', 'pack', 'other']}
                             }
                         }
                     },
                     'indexes': [
                         {'key': [('user_id', ASCENDING), ('list_id', ASCENDING)]},
+                        {'key': [('session_id', ASCENDING), ('list_id', ASCENDING)]},
                         {'key': [('created_at', DESCENDING)]}
                     ]
                 },
@@ -90,12 +88,12 @@ def initialize_app_data(app):
                     'validator': {
                         '$jsonSchema': {
                             'bsonType': 'object',
-                            'required': ['name', 'session_id', 'budget', 'created_at', 'updated_at', 'total_spent', 'status', 'items'],
+                            'required': ['name', 'session_id', 'budget', 'created_at', 'updated_at', 'total_spent', 'status', 'collaborators'],
                             'properties': {
                                 'name': {'bsonType': 'string'},
                                 'user_id': {'bsonType': ['string', 'null']},
                                 'session_id': {'bsonType': 'string'},
-                                'budget': {'bsonType': 'double', 'minimum': 0},
+                                'budget': {'bsonType': 'double', 'minimum': 0.01, 'maximum': 10000000000},
                                 'created_at': {'bsonType': 'date'},
                                 'updated_at': {'bsonType': 'date'},
                                 'collaborators': {
@@ -103,26 +101,7 @@ def initialize_app_data(app):
                                     'items': {'bsonType': 'string'}
                                 },
                                 'total_spent': {'bsonType': 'double', 'minimum': 0},
-                                'status': {'enum': ['active', 'saved']},
-                                'items': {
-                                    'bsonType': 'array',
-                                    'items': {
-                                        'bsonType': 'object',
-                                        'required': ['name', 'quantity', 'price', 'category', 'status', 'created_at', 'updated_at'],
-                                        'properties': {
-                                            'name': {'bsonType': 'string'},
-                                            'quantity': {'bsonType': 'int', 'minimum': 1},
-                                            'price': {'bsonType': 'double', 'minimum': 0},
-                                            'category': {'enum': ['fruits', 'vegetables', 'dairy', 'meat', 'grains', 'beverages', 'household', 'other']},
-                                            'status': {'enum': ['to_buy', 'bought']},
-                                            'created_at': {'bsonType': 'date'},
-                                            'updated_at': {'bsonType': 'date'},
-                                            'store': {'bsonType': ['string', 'null']},
-                                            'frequency': {'bsonType': 'int', 'minimum': 1},
-                                            'unit': {'bsonType': 'string', 'enum': ['piece', 'kg', 'liter', 'pack', 'unit', 'other']}
-                                        }
-                                    }
-                                }
+                                'status': {'enum': ['active', 'saved']}
                             }
                         }
                     },
@@ -245,24 +224,19 @@ def initialize_app_data(app):
                     # Check if an index with these keys and options already exists
                     index_found = False
                     for existing_index_name, existing_index_info in existing_indexes.items():
-                        # The key tuple must be an exact match
                         if tuple(existing_index_info['key']) == tuple(keys):
-                            # Check if options are the same (excluding internal MongoDB metadata)
                             existing_options = {k: v for k, v in existing_index_info.items() if k not in ['key', 'v', 'ns', 'name']}
                             if existing_options == options:
                                 logger.info(f"Index already exists on {collection_name}: {keys}", extra={'session_id': 'no-session-id'})
                                 index_found = True
                                 break
                             else:
-                                # Found a conflicting index with the same keys but different options.
-                                # Drop the old one, but not the default _id index.
                                 if existing_index_name != '_id_':
                                     logger.warning(f"Dropping conflicting index {existing_index_name} on {collection_name} to create new one.")
                                     db[collection_name].drop_index(existing_index_name)
                     
                     if not index_found:
                         try:
-                            # Use default name if not provided in the config
                             index_name = options.get('name', None)
                             db[collection_name].create_index(keys, name=index_name, **options)
                             logger.info(f"Created index on {collection_name}: {keys} with options {options}",
@@ -336,6 +310,10 @@ def create_budget(db, budget_data):
         logger.info(f"{trans('general_budget_created', default='Created budget record with ID')}: {result.inserted_id}", 
                    extra={'session_id': budget_data.get('session_id', 'no-session-id')})
         return str(result.inserted_id)
+    except WriteError as e:
+        logger.error(f"{trans('general_budget_creation_error', default='Error creating budget record')}: {str(e)}", 
+                     exc_info=True, extra={'session_id': budget_data.get('session_id', 'no-session-id')})
+        raise
     except Exception as e:
         logger.error(f"{trans('general_budget_creation_error', default='Error creating budget record')}: {str(e)}", 
                      exc_info=True, extra={'session_id': budget_data.get('session_id', 'no-session-id')})
@@ -360,6 +338,10 @@ def create_bill(db, bill_data):
         logger.info(f"{trans('general_bill_created', default='Created bill record with ID')}: {result.inserted_id}", 
                    extra={'session_id': bill_data.get('session_id', 'no-session-id')})
         return str(result.inserted_id)
+    except WriteError as e:
+        logger.error(f"{trans('general_bill_creation_error', default='Error creating bill record')}: {str(e)}", 
+                     exc_info=True, extra={'session_id': bill_data.get('session_id', 'no-session-id')})
+        raise
     except Exception as e:
         logger.error(f"{trans('general_bill_creation_error', default='Error creating bill record')}: {str(e)}", 
                      exc_info=True, extra={'session_id': bill_data.get('session_id', 'no-session-id')})
@@ -384,6 +366,10 @@ def create_bill_reminder(db, reminder_data):
         logger.info(f"{trans('general_bill_reminder_created', default='Created bill reminder with ID')}: {result.inserted_id}", 
                    extra={'session_id': reminder_data.get('session_id', 'no-session-id')})
         return str(result.inserted_id)
+    except WriteError as e:
+        logger.error(f"{trans('general_bill_reminder_creation_error', default='Error creating bill reminder')}: {str(e)}", 
+                     exc_info=True, extra={'session_id': reminder_data.get('session_id', 'no-session-id')})
+        raise
     except Exception as e:
         logger.error(f"{trans('general_bill_reminder_creation_error', default='Error creating bill reminder')}: {str(e)}", 
                      exc_info=True, extra={'session_id': reminder_data.get('session_id', 'no-session-id')})
@@ -401,14 +387,19 @@ def create_shopping_item(db, item_data):
         str: ID of the created shopping item
     """
     try:
-        required_fields = ['user_id', 'list_id', 'name', 'quantity', 'price', 'category', 'status', 'created_at', 'updated_at']
+        required_fields = ['list_id', 'name', 'quantity', 'price', 'category', 'status', 'created_at', 'updated_at', 'session_id']
         if not all(field in item_data for field in required_fields):
             raise ValueError(trans('general_missing_shopping_item_fields', default='Missing required shopping item fields'))
         item_data['unit'] = item_data.get('unit', 'piece')
+        item_data['session_id'] = str(item_data['session_id'])  # Ensure session_id is a string
         result = db.shopping_items.insert_one(item_data)
         logger.info(f"{trans('general_shopping_item_created', default='Created shopping item with ID')}: {result.inserted_id}", 
                    extra={'session_id': item_data.get('session_id', 'no-session-id')})
         return str(result.inserted_id)
+    except WriteError as e:
+        logger.error(f"{trans('general_shopping_item_creation_error', default='Error creating shopping item')}: {str(e)}", 
+                     exc_info=True, extra={'session_id': item_data.get('session_id', 'no-session-id')})
+        raise
     except Exception as e:
         logger.error(f"{trans('general_shopping_item_creation_error', default='Error creating shopping item')}: {str(e)}", 
                      exc_info=True, extra={'session_id': item_data.get('session_id', 'no-session-id')})
@@ -439,6 +430,7 @@ def to_dict_shopping_item(record):
     return {
         'id': str(record.get('_id', '')),
         'user_id': record.get('user_id', ''),
+        'session_id': record.get('session_id', ''),
         'list_id': record.get('list_id', ''),
         'name': record.get('name', ''),
         'quantity': record.get('quantity', 0),
@@ -448,7 +440,8 @@ def to_dict_shopping_item(record):
         'created_at': record.get('created_at'),
         'updated_at': record.get('updated_at'),
         'store': record.get('store', ''),
-        'frequency': record.get('frequency', 1)
+        'frequency': record.get('frequency', 1),
+        'unit': record.get('unit', 'piece')
     }
 
 def update_shopping_item(db, item_id, update_data):
@@ -476,6 +469,10 @@ def update_shopping_item(db, item_id, update_data):
         logger.info(f"{trans('general_shopping_item_no_change', default='No changes made to shopping item with ID')}: {item_id}", 
                    extra={'session_id': 'no-session-id'})
         return False
+    except WriteError as e:
+        logger.error(f"{trans('general_shopping_item_update_error', default='Error updating shopping item with ID')} {item_id}: {str(e)}", 
+                     exc_info=True, extra={'session_id': 'no-session-id'})
+        raise
     except Exception as e:
         logger.error(f"{trans('general_shopping_item_update_error', default='Error updating shopping item with ID')} {item_id}: {str(e)}", 
                      exc_info=True, extra={'session_id': 'no-session-id'})
@@ -538,6 +535,25 @@ def to_dict_bill_reminder(record):
         'read_status': record.get('read_status', False)
     }
 
+@lru_cache(maxsize=128)
+def get_shopping_lists(db, filter_kwargs):
+    """
+    Retrieve shopping list records based on filter criteria.
+    
+    Args:
+        db: MongoDB database instance
+        filter_kwargs: Dictionary of filter criteria
+    
+    Returns:
+        list: List of normalized shopping list records
+    """
+    try:
+        return [normalize_shopping_list(record) for record in db.shopping_lists.find(filter_kwargs).sort('updated_at', DESCENDING)]
+    except Exception as e:
+        logger.error(f"{trans('general_shopping_lists_fetch_error', default='Error getting shopping lists')}: {str(e)}", 
+                     exc_info=True, extra={'session_id': 'no-session-id'})
+        raise
+
 def create_shopping_list(db, list_data):
     """
     Create a new shopping list in the shopping_lists collection.
@@ -553,13 +569,18 @@ def create_shopping_list(db, list_data):
         required_fields = ['name', 'session_id', 'budget', 'created_at', 'updated_at', 'total_spent', 'status']
         if not all(field in list_data for field in required_fields):
             raise ValueError(trans('general_missing_shopping_list_fields', default='Missing required shopping list fields'))
-        list_data['_id'] = str(uuid.uuid4())
-        list_data['items'] = list_data.get('items', [])
+        list_data['session_id'] = str(list_data['session_id'])  # Ensure session_id is a string
+        list_data['_id'] = ObjectId()
+        list_data['collaborators'] = list_data.get('collaborators', [])
         result = db.shopping_lists.insert_one(list_data)
         logger.info(f"{trans('general_shopping_list_created', default='Created shopping list with ID')}: {result.inserted_id}", 
                    extra={'session_id': list_data.get('session_id', 'no-session-id')})
         get_shopping_lists.cache_clear()
         return str(result.inserted_id)
+    except WriteError as e:
+        logger.error(f"{trans('general_shopping_list_creation_error', default='Error creating shopping list')}: {str(e)}", 
+                     exc_info=True, extra={'session_id': list_data.get('session_id', 'no-session-id')})
+        raise
     except Exception as e:
         logger.error(f"{trans('general_shopping_list_creation_error', default='Error creating shopping list')}: {str(e)}", 
                      exc_info=True, extra={'session_id': list_data.get('session_id', 'no-session-id')})
@@ -579,33 +600,14 @@ def normalize_shopping_list(record):
         'id': str(record.get('_id', '')),
         'name': record.get('name', ''),
         'user_id': record.get('user_id', None),
-        'session_id': record.get('session_id', ''),
+        'session_id': str(record.get('session_id', '')),  # Ensure session_id is a string
         'budget': float(record.get('budget', 0.0)),
         'created_at': record.get('created_at', datetime.utcnow()),
         'updated_at': record.get('updated_at', datetime.utcnow()),
         'collaborators': record.get('collaborators', []),
         'total_spent': float(record.get('total_spent', 0.0)),
-        'status': record.get('status', 'active'),
-        'items': record.get('items', []) if isinstance(record.get('items'), list) else []
+        'status': record.get('status', 'active')
     }
-
-def get_shopping_lists(db, filter_kwargs):
-    """
-    Retrieve shopping list records based on filter criteria.
-    
-    Args:
-        db: MongoDB database instance
-        filter_kwargs: Dictionary of filter criteria
-    
-    Returns:
-        list: List of normalized shopping list records
-    """
-    try:
-        return [normalize_shopping_list(record) for record in db.shopping_lists.find(filter_kwargs).sort('updated_at', DESCENDING)]
-    except Exception as e:
-        logger.error(f"{trans('general_shopping_lists_fetch_error', default='Error getting shopping lists')}: {str(e)}", 
-                     exc_info=True, extra={'session_id': 'no-session-id'})
-        raise
 
 def update_shopping_list(db, list_id, update_data):
     """
@@ -622,7 +624,7 @@ def update_shopping_list(db, list_id, update_data):
     try:
         update_data['updated_at'] = datetime.utcnow()
         result = db.shopping_lists.update_one(
-            {'_id': list_id},
+            {'_id': ObjectId(list_id)},
             {'$set': update_data}
         )
         if result.modified_count > 0:
@@ -633,6 +635,10 @@ def update_shopping_list(db, list_id, update_data):
         logger.info(f"{trans('general_shopping_list_no_change', default='No changes made to shopping list with ID')}: {list_id}", 
                    extra={'session_id': 'no-session-id'})
         return False
+    except WriteError as e:
+        logger.error(f"{trans('general_shopping_list_update_error', default='Error updating shopping list with ID')} {list_id}: {str(e)}", 
+                     exc_info=True, extra={'session_id': 'no-session-id'})
+        raise
     except Exception as e:
         logger.error(f"{trans('general_shopping_list_update_error', default='Error updating shopping list with ID')} {list_id}: {str(e)}", 
                      exc_info=True, extra={'session_id': 'no-session-id'})
@@ -660,6 +666,10 @@ def update_user_balance(db, user_id, amount):
                         extra={'session_id': 'no-session-id'})
             return True
         return False
+    except WriteError as e:
+        logger.error(f"Error updating user balance for {user_id}: {str(e)}", 
+                     exc_info=True, extra={'session_id': 'no-session-id'})
+        raise
     except Exception as e:
         logger.error(f"Error updating user balance for {user_id}: {str(e)}", 
                      exc_info=True, extra={'session_id': 'no-session-id'})
@@ -691,7 +701,7 @@ def to_dict_shopping_list(record):
         'id': str(record.get('_id', '')),
         'name': record.get('name', ''),
         'user_id': record.get('user_id', ''),
-        'session_id': record.get('session_id', ''),
+        'session_id': str(record.get('session_id', '')),  # Ensure session_id is a string
         'budget': record.get('budget', 0.0),
         'created_at': record.get('created_at'),
         'updated_at': record.get('updated_at'),
@@ -714,26 +724,28 @@ def delete_shopping_list(db, list_id, user_id=None, email=None):
         bool: True if deleted, False if not found or no changes made
     """
     try:
-        filter_criteria = {'_id': list_id}
+        filter_criteria = {'_id': ObjectId(list_id)}
         if user_id and email:
             filter_criteria.update({'user_id': user_id, 'email': email.lower()})
         
         with db.client.start_session() as session:
             with session.start_transaction():
-                # Delete the shopping list
-                list_result = db.shopping_lists.delete_one(filter_criteria)
+                list_result = db.shopping_lists.delete_one(filter_criteria, session=session)
                 if list_result.deleted_count == 0:
                     logger.info(f"No shopping list found with ID {list_id} for deletion", 
                                extra={'session_id': 'no-session-id'})
                     return False
                 
-                # Delete associated items
-                items_result = db.shopping_items.delete_many({'list_id': list_id})
+                items_result = db.shopping_items.delete_many({'list_id': str(list_id)}, session=session)
                 logger.info(f"Deleted shopping list ID {list_id} and {items_result.deleted_count} associated items", 
                            extra={'session_id': 'no-session-id'})
                 
                 get_shopping_lists.cache_clear()
                 return True
+    except WriteError as e:
+        logger.error(f"Error deleting shopping list ID {list_id}: {str(e)}", 
+                    exc_info=True, extra={'session_id': 'no-session-id'})
+        raise
     except Exception as e:
         logger.error(f"Error deleting shopping list ID {list_id}: {str(e)}", 
                     exc_info=True, extra={'session_id': 'no-session-id'})
@@ -751,15 +763,21 @@ def create_shopping_items_bulk(db, items_data):
         list: List of IDs of the created shopping items
     """
     try:
-        required_fields = ['user_id', 'list_id', 'name', 'quantity', 'price', 'category', 'status', 'created_at', 'updated_at']
+        required_fields = ['list_id', 'name', 'quantity', 'price', 'category', 'status', 'created_at', 'updated_at', 'session_id']
         for item in items_data:
             if not all(field in item for field in required_fields):
                 raise ValueError(f"Missing required fields in item: {item}")
+            item['session_id'] = str(item['session_id'])  # Ensure session_id is a string
+            item['unit'] = item.get('unit', 'piece')
         
         result = db.shopping_items.insert_many(items_data)
         logger.info(f"Created {len(result.inserted_ids)} shopping items", 
                    extra={'session_id': items_data[0].get('session_id', 'no-session-id')})
         return [str(id) for id in result.inserted_ids]
+    except WriteError as e:
+        logger.error(f"Error creating bulk shopping items: {str(e)}", 
+                    exc_info=True, extra={'session_id': items_data[0].get('session_id', 'no-session-id') if items_data else 'no-session-id'})
+        raise
     except Exception as e:
         logger.error(f"Error creating bulk shopping items: {str(e)}", 
                     exc_info=True, extra={'session_id': items_data[0].get('session_id', 'no-session-id') if items_data else 'no-session-id'})
@@ -789,6 +807,10 @@ def update_budget(db, budget_id, update_data):
         logger.info(f"{trans('general_budget_no_change', default='No changes made to budget record with ID')}: {budget_id}", 
                    extra={'session_id': 'no-session-id'})
         return False
+    except WriteError as e:
+        logger.error(f"{trans('general_budget_update_error', default='Error updating budget record with ID')} {budget_id}: {str(e)}", 
+                    exc_info=True, extra={'session_id': 'no-session-id'})
+        raise
     except Exception as e:
         logger.error(f"{trans('general_budget_update_error', default='Error updating budget record with ID')} {budget_id}: {str(e)}", 
                     exc_info=True, extra={'session_id': 'no-session-id'})
@@ -818,6 +840,10 @@ def update_bill(db, bill_id, update_data):
         logger.info(f"{trans('general_bill_no_change', default='No changes made to bill record with ID')}: {bill_id}", 
                    extra={'session_id': 'no-session-id'})
         return False
+    except WriteError as e:
+        logger.error(f"{trans('general_bill_update_error', default='Error updating bill record with ID')} {bill_id}: {str(e)}", 
+                    exc_info=True, extra={'session_id': 'no-session-id'})
+        raise
     except Exception as e:
         logger.error(f"{trans('general_bill_update_error', default='Error updating bill record with ID')} {bill_id}: {str(e)}", 
                     exc_info=True, extra={'session_id': 'no-session-id'})
@@ -847,6 +873,10 @@ def update_bill_reminder(db, reminder_id, update_data):
         logger.info(f"{trans('general_bill_reminder_no_change', default='No changes made to bill reminder with ID')}: {reminder_id}", 
                    extra={'session_id': 'no-session-id'})
         return False
+    except WriteError as e:
+        logger.error(f"{trans('general_bill_reminder_update_error', default='Error updating bill reminder with ID')} {reminder_id}: {str(e)}", 
+                    exc_info=True, extra={'session_id': 'no-session-id'})
+        raise
     except Exception as e:
         logger.error(f"{trans('general_bill_reminder_update_error', default='Error updating bill reminder with ID')} {reminder_id}: {str(e)}", 
                     exc_info=True, extra={'session_id': 'no-session-id'})
@@ -867,12 +897,10 @@ def get_user(db, user_id):
     try:
         user_doc = db.users.find_one({'_id': user_id})
         if user_doc:
-            # Convert to object-like structure for compatibility
             class UserObj:
                 def __init__(self, doc):
                     for key, value in doc.items():
                         setattr(self, key, value)
-                    # Ensure ficore_credit_balance is integer
                     self.ficore_credit_balance = int(doc.get('ficore_credit_balance', 0))
             return UserObj(user_doc)
         return None
@@ -918,13 +946,11 @@ def create_user(db, user_data):
         str: ID of the created user
     """
     try:
-        # Hash password if provided as plain text
         if 'password' in user_data:
             user_data['password_hash'] = generate_password_hash(user_data.pop('password'))
         
-        # Ensure required fields
         user_data.setdefault('created_at', datetime.utcnow())
-        user_data.setdefault('ficore_credit_balance', 10)  # Default signup bonus
+        user_data.setdefault('ficore_credit_balance', 10)
         user_data.setdefault('role', 'personal')
         user_data.setdefault('is_admin', False)
         user_data.setdefault('setup_complete', False)
@@ -932,6 +958,9 @@ def create_user(db, user_data):
         result = db.users.insert_one(user_data)
         logger.info(f"Created user with ID: {result.inserted_id}")
         return str(result.inserted_id)
+    except WriteError as e:
+        logger.error(f"Error creating user: {str(e)}")
+        raise
     except Exception as e:
         logger.error(f"Error creating user: {str(e)}")
         raise
@@ -951,6 +980,9 @@ def create_credit_request(db, request_data):
         result = db.credit_requests.insert_one(request_data)
         logger.info(f"Created credit request with ID: {result.inserted_id}")
         return str(result.inserted_id)
+    except WriteError as e:
+        logger.error(f"Error creating credit request: {str(e)}")
+        raise
     except Exception as e:
         logger.error(f"Error creating credit request: {str(e)}")
         raise
@@ -974,6 +1006,9 @@ def update_credit_request(db, request_id, update_data):
             {'$set': update_data}
         )
         return result.modified_count > 0
+    except WriteError as e:
+        logger.error(f"Error updating credit request {request_id}: {str(e)}")
+        raise
     except Exception as e:
         logger.error(f"Error updating credit request {request_id}: {str(e)}")
         return False
@@ -1058,6 +1093,9 @@ def create_feedback(db, feedback_data):
         result = db.feedback.insert_one(feedback_data)
         logger.info(f"Created feedback with ID: {result.inserted_id}")
         return str(result.inserted_id)
+    except WriteError as e:
+        logger.error(f"Error creating feedback: {str(e)}")
+        raise
     except Exception as e:
         logger.error(f"Error creating feedback: {str(e)}")
         raise
@@ -1077,11 +1115,15 @@ def log_tool_usage(tool_name, db, user_id=None, session_id=None, action=None):
         log_entry = {
             'tool_name': tool_name,
             'user_id': user_id,
-            'session_id': session_id,
+            'session_id': str(session_id) if session_id else 'no-session-id',  # Ensure session_id is a string
             'action': action,
             'timestamp': datetime.utcnow()
         }
         db.tool_usage.insert_one(log_entry)
-        logger.info(f"Logged tool usage: {tool_name} by user {user_id}")
+        logger.info(f"Logged tool usage: {tool_name} by user {user_id}", extra={'session_id': log_entry['session_id']})
+    except WriteError as e:
+        logger.error(f"Error logging tool usage: {str(e)}", extra={'session_id': session_id or 'no-session-id'})
+        raise
     except Exception as e:
-        logger.error(f"Error logging tool usage: {str(e)}")
+        logger.error(f"Error logging tool usage: {str(e)}", extra={'session_id': session_id or 'no-session-id'})
+        raise
