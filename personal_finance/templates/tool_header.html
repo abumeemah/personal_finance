@@ -27,27 +27,7 @@
                     <a href="{{ url_for('bill.main') }}" class="btn btn-outline-primary btn-sm {{ 'active' if request.endpoint == 'bill.main' else '' }}" 
                        data-bs-toggle="tooltip" title="{{ t('bill_title', default='Bill Manager') }}">
                         <i class="fas fa-file-invoice"></i>
-                    </a>
-                    <a href="{{ url_for('emergency_fund.main') }}" class="btn btn-outline-primary btn-sm {{ 'active' if request.endpoint == 'emergency_fund.main' else '' }}" 
-                       data-bs-toggle="tooltip" title="{{ t('emergency_fund_title', default='Emergency Fund') }}">
-                        <i class="fas fa-shield-alt"></i>
-                    </a>
-                    <a href="{{ url_for('financial_health.main') }}" class="btn btn-outline-primary btn-sm {{ 'active' if request.endpoint == 'financial_health.main' else '' }}" 
-                       data-bs-toggle="tooltip" title="{{ t('financial_health_title', default='Health Score') }}">
-                        <i class="fas fa-heartbeat"></i>
-                    </a>
-                    <a href="{{ url_for('net_worth.main') }}" class="btn btn-outline-primary btn-sm {{ 'active' if request.endpoint == 'net_worth.main' else '' }}" 
-                       data-bs-toggle="tooltip" title="{{ t('net_worth_title', default='Net Worth') }}">
-                        <i class="fas fa-chart-line"></i>
-                    </a>
-                    <a href="{{ url_for('learning_hub.main') }}" class="btn btn-outline-primary btn-sm {{ 'active' if request.endpoint == 'learning_hub.main' else '' }}" 
-                       data-bs-toggle="tooltip" title="{{ t('learning_hub_title', default='Learning Hub') }}">
-                        <i class="fas fa-graduation-cap"></i>
-                    </a>
-                    <a href="{{ url_for('quiz.main') }}" class="btn btn-outline-primary btn-sm {{ 'active' if request.endpoint == 'quiz.main' else '' }}" 
-                       data-bs-toggle="tooltip" title="{{ t('quiz_title', default='Financial Quiz') }}">
-                        <i class="fas fa-question-circle"></i>
-                    </a>
+                    </a
                 </div>
             </div>
         </div>
