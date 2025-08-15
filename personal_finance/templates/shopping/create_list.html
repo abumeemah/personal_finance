@@ -66,7 +66,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="{{ list_form.budget.id }}" class="form-label">{{ t('general_budget', default='Budget') | e }}</label>
-                            {{ list_form.budget(class="form-control number-input", type="text", data_allow_commas="true", placeholder=t('shopping_budget_placeholder', default='e.g., 100,000.00') | e, value=(list_form.budget.data | string | replace(',', '') if list_form.budget.data is not none else ''), required=True) }}
+                            {{ list_form.budget(class="form-control number-input", type="text", data_allow_commas="true", placeholder=t('shopping_budget_placeholder', default='e.g., 100,000.00') | e, value='' if list_form.budget.data is none else list_form.budget.data | string | replace(',', '') | float | format_currency, required=True) }}
                             <div class="invalid-feedback">{{ t('shopping_budget_required', default='Budget is required') | e }}</div>
                             <small id="budget_help" class="form-text text-muted">{{ t('shopping_budget_help', default='Enter your budget (e.g., 100,000 or 100,000.00)') | e }}</small>
                         </div>
