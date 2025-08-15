@@ -400,16 +400,6 @@
 
     <!-- Share Ficore Africa and Email Preferences Section -->
     {% if current_user.is_authenticated %}
-        <div class="card mt-4 shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">{{ trans('general_share_ficore', default='Share Ficore Africa with Friends') }}</h5>
-            </div>
-            <div class="card-body">
-                <p>{{ trans('general_share_ficore_invite', default='Invite your friends to join Ficore Africa and manage their finances better!') }}</p>
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" id="referralLink" value="{{ url_for('users.signup', ref=current_user.referral_code, _external=True) if current_user.referral_code else trans('general_profile_no_referral', default='No referral link available.') }}" readonly>
-                    <button class="btn btn-secondary" type="button" onclick="copyReferralLink()">{{ trans('general_profile_copy_link', default='Copy') }}</button>
-                </div>
                 <div class="mt-3">
                     <h6>{{ trans('bill_email_preferences', default='Email Preferences') }}</h6>
                     <p>{{ trans('bill_unsubscribe_description', default='Click below to unsubscribe from bill reminder emails.') }}</p>
