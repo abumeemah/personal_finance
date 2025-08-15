@@ -148,19 +148,25 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<style>
+.text-budget { color: #007bff; }
+.text-bill { color: #ffc107; }
+.text-shopping { color: #17a2b8; }
+.text-credits { color: #28a745; }
+</style>
 <script>
 window.apiUrls = {
-    budgetSummary: "/personal/summaries/budget/summary",
-    billSummary: "/personal/summaries/bill/summary",
-    shoppingSummary: "/personal/summaries/shopping/summary",
-    ficoreBalance: "/personal/summaries/ficore_balance",
-    recentActivity: "/personal/summaries/recent_activity",
-    notifications: "/personal/summaries/notifications",
-    manageShoppingLists: "/personal/shopping/main",
-    manageShoppingItems: "/personal/shopping/lists/{list_id}/items",
-    shareShoppingList: "/personal/shopping/lists/{list_id}/share",
-    shoppingPriceHistory: "/personal/shopping/price_history/{item_name}",
-    predictiveSuggestions: "/personal/shopping/suggestions",
+    budgetSummary: "/summaries/budget/summary",
+    billSummary: "/summaries/bill/summary",
+    shoppingSummary: "/summaries/shopping/summary",
+    ficoreBalance: "/summaries/ficore_balance",
+    recentActivity: "/summaries/recent_activity",
+    notifications: "/summaries/notifications",
+    manageShoppingLists: "/shopping/main",
+    manageShoppingItems: "/shopping/lists/{list_id}/items",
+    shareShoppingList: "/shopping/lists/{list_id}/share",
+    shoppingPriceHistory: "/shopping/price_history/{item_name}",
+    predictiveSuggestions: "/shopping/suggestions",
     requestFicoreCredits: "{{ url_for('credits.request_credits', _external=True) | e }}"
 };
 
@@ -323,7 +329,7 @@ function loadRecentActivity() {
                 activity.icon &&
                 activity.type &&
                 activity.timestamp &&
-                ['budget', 'bill', 'shopping'].includes(activity.type.toLowerCase())
+                ['budget', 'bill', 'shopping', 'credits'].includes(activity.type.toLowerCase())
             );
 
             if (validActivities.length < activities.length) {
@@ -335,7 +341,7 @@ function loadRecentActivity() {
                         a.icon &&
                         a.type &&
                         a.timestamp &&
-                        ['budget', 'bill', 'shopping'].includes(a.type.toLowerCase())
+                        ['budget', 'bill', 'shopping', 'credits'].includes(a.type.toLowerCase())
                     ))
                 });
             }
