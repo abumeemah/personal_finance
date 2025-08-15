@@ -83,15 +83,28 @@
 
 {% block extra_scripts %}
 <script>
-    window.SHOPPING_GET_LIST_DETAILS_URL = "{{ url_for('shopping.get_list_details') | e }}";
-    window.CSRF_TOKEN = "{{ csrf_token() | e }}";
-</script>
-<script defer src="{{ url_for('static', filename='js/shopping.js') | e }}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.toast').forEach(toast => {
-        new bootstrap.Toast(toast).show();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap Toasts
+        document.querySelectorAll('.toast').forEach(toast => {
+            new bootstrap.Toast(toast).show();
+        });
+
+        const createListForm = document.getElementById('createListForm');
+        const submitButton = document.getElementById('createListSubmit');
+        const spinner = submitButton.querySelector('.spinner-border');
+
+        // Form Submission and Validation
+        createListForm.addEventListener('submit', function(event) {
+            if (!this.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            } else {
+                // Prevent double submission and show spinner
+                submitButton.disabled = true;
+                spinner.classList.remove('d-none');
+            }
+            this.classList.add('was-validated');
+        });
     });
-});
 </script>
 {% endblock %}
