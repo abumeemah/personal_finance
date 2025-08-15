@@ -27,7 +27,11 @@
                     <a href="{{ url_for('bill.main') }}" class="btn btn-outline-primary btn-sm {{ 'active' if request.endpoint == 'bill.main' else '' }}" 
                        data-bs-toggle="tooltip" title="{{ t('bill_title', default='Bill Manager') }}">
                         <i class="fas fa-file-invoice"></i>
-                    </a
+                    </a>
+                    <a href="{{ url_for('shopping.main') }}" class="btn btn-outline-primary btn-sm {{ 'active' if request.endpoint == 'shopping.main' else '' }}" 
+                       data-bs-toggle="tooltip" title="{{ t('shopping_title', default='Shopping List Planner') }}">
+                        <i class="fas fa-shopping-cart"></i>
+                    </a>
                 </div>
             </div>
         </div>
