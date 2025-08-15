@@ -174,7 +174,7 @@ def create_app():
             ('bill_reminders', [[('user_id', 1), ('sent_at', -1)], [('notification_id', 1)]]),
             ('shopping_lists', [[('user_id', 1), ('created_at', -1)], [('session_id', 1), ('created_at', -1)]]),
             ('shopping_items', [[('user_id', 1), ('list_id', 1)], [('session_id', 1), ('list_id', 1)]]),
-            ('ficore_credit_transactions', [[('user_id', 1), ('timestamp', DESCENDING)]]) # Corrected index for ficore_credit_transactions
+            ('ficore_credit_transactions', [[('user_id', 1), ('timestamp', DESCENDING)]])
         ]:
             for index in indexes:
                 db[collection].create_index(index)
@@ -192,7 +192,7 @@ def create_app():
                 '_id': admin_username.lower(),
                 'username': admin_username.lower(),
                 'email': admin_email.lower(),
-                'password': hashed_password, # Use the hashed password
+                'password': hashed_password,
                 'is_admin': True,
                 'role': 'admin',
                 'created_at': datetime.utcnow(),
@@ -203,7 +203,7 @@ def create_app():
         else:
             db.users.update_one(
                 {'_id': admin_username.lower()},
-                {'$set': {'password': hashed_password}} # Use 'password' field and hashed password
+                {'$set': {'password': hashed_password}}
             )
 
     # Template filters and context processors
@@ -213,8 +213,6 @@ def create_app():
         trans=utils.trans_function,
         t=utils.trans_function,  # Ensure 't' is available in Jinja templates
         is_admin=utils.is_admin,
-        format_currency=utils.format_currency,
-        format_date=utils.format_date,
         FACEBOOK_URL=app.config.get('FACEBOOK_URL', 'https://facebook.com/ficoreafrica'),
         TWITTER_URL=app.config.get('TWITTER_URL', 'https://x.com/ficoreafrica'),
         LINKEDIN_URL=app.config.get('LINKEDIN_URL', 'https://linkedin.com/company/ficoreafrica')
@@ -238,6 +236,14 @@ def create_app():
             return str(value)
         except Exception:
             return str(value)
+
+    @app.template_filter('format_date')
+    def format_date(value):
+        return utils.format_date(value)
+
+    @app.template_filter('format_currency')
+    def format_currency(value):
+        return utils.format_currency(value)
 
     @app.context_processor
     def inject_globals():
