@@ -171,7 +171,6 @@ class ShoppingListForm(FlaskForm):
         if budget.data is None or budget.data == '':
             raise ValidationError(trans('shopping_budget_required', default='Budget is required'))
         try:
-            # Clean the input to remove any non-numeric characters except decimal point
             cleaned_value = str(budget.data).replace(',', '').replace(' ', '')
             budget.data = round(float(cleaned_value), 2)
             if budget.data < 0.01:
@@ -291,7 +290,7 @@ def main():
     list_form = ShoppingListForm()
     item_form = ShoppingItemsForm()
     share_form = ShareListForm()
-    items_form = ShoppingItemsForm()  # New form for multiple items in manage-list tab
+    items_form = ShoppingItemsForm()
     db = get_mongo_db()
 
     # Check credits before rendering create-list tab
@@ -322,7 +321,6 @@ def main():
             'id': str(item['_id']),
             'name': item.get('name', ''),
             'quantity': int(item.get('quantity', 1)),
-            'price': format_currency(float(item.get('price', 0.0))),
             'price_raw': float(item.get('price', 0.0)),
             'unit': item.get('unit', 'piece'),
             'category': item.get('category', 'other'),
@@ -330,7 +328,7 @@ def main():
             'store': item.get('store', 'Unknown'),
             'frequency': int(item.get('frequency', 7))
         } for item in list_items]
-        selected_list['items'] = items  # Explicitly set items as a list
+        selected_list['items'] = items
 
     categories = {}
     if selected_list_id:
@@ -376,7 +374,7 @@ def main():
                     'name': list_form.name.data,
                     'user_id': str(current_user.id) if current_user.is_authenticated else None,
                     'session_id': session['sid'] if not current_user.is_authenticated else None,
-                    'budget': float(list_form.budget.data),  # Use validated budget data
+                    'budget': float(list_form.budget.data),
                     'created_at': datetime.utcnow(),
                     'updated_at': datetime.utcnow(),
                     'collaborators': [],
@@ -388,7 +386,6 @@ def main():
                     with db.client.start_session() as mongo_session:
                         with mongo_session.start_transaction():
                             db.shopping_lists.insert_one(list_data, session=mongo_session)
-                            # Deduction moved to save_list action
                     session['selected_list_id'] = str(list_data['_id'])
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                         return jsonify({
@@ -419,7 +416,7 @@ def main():
                     for error in field_errors:
                         flash(f"{field.capitalize()}: {trans(error, default=error)}", 'danger')
                 return render_template(
-                    'shopping/create_list.html',
+                    'personal/SHOPPING/shopping_create_list.html',
                     list_form=list_form,
                     item_form=item_form,
                     share_form=share_form,
@@ -436,9 +433,7 @@ def main():
                     ],
                     insights=[],
                     tool_title=trans('shopping_title', default='Shopping List Planner'),
-                    active_tab='create-list',
-                    format_currency=format_currency,
-                    format_datetime=format_date
+                    active_tab='create-list'
                 )
 
         elif action == 'add_items':
@@ -450,7 +445,6 @@ def main():
             if not shopping_list:
                 flash(trans('shopping_list_not_found', default='List not found.'), 'danger')
                 return redirect(url_for('shopping.main', tab='add-items'))
-            # Check for duplicate item names
             existing_items = db.shopping_items.find({'list_id': list_id}, {'name': 1})
             existing_names = {item['name'].lower() for item in existing_items}
             new_items = []
@@ -502,7 +496,6 @@ def main():
                     with db.client.start_session() as mongo_session:
                         with mongo_session.start_transaction():
                             db.shopping_items.insert_one(new_item_data, session=mongo_session)
-                            # Deduction moved to save_list action
                     added += 1
                     existing_names.add(item_data['name'].lower())
                 except ValueError as e:
@@ -530,7 +523,6 @@ def main():
             if not shopping_list:
                 flash(trans('shopping_list_not_found', default='List not found.'), 'danger')
                 return redirect(url_for('shopping.main', tab='dashboard'))
-            # Check for duplicate item names
             existing_items = db.shopping_items.find({'list_id': list_id}, {'name': 1})
             existing_names = {item['name'].lower() for item in existing_items}
             new_items = []
@@ -670,18 +662,15 @@ def main():
         list_data = {
             'id': str(lst['_id']),
             'name': lst.get('name', ''),
-            'budget': format_currency(float(lst.get('budget', 0.0))),
             'budget_raw': float(lst.get('budget', 0.0)),
-            'total_spent': format_currency(float(lst.get('total_spent', 0.0))),
             'total_spent_raw': float(lst.get('total_spent', 0.0)),
             'status': lst.get('status', 'active'),
-            'created_at': lst.get('created_at').strftime('%Y-%m-%d') if lst.get('created_at') else 'N/A',
+            'created_at': lst.get('created_at'),
             'collaborators': lst.get('collaborators', []),
             'items': [{
                 'id': str(item['_id']),
                 'name': item.get('name', ''),
                 'quantity': int(item.get('quantity', 1)),
-                'price': format_currency(float(item.get('price', 0.0))),
                 'price_raw': float(item.get('price', 0.0)),
                 'unit': item.get('unit', 'piece'),
                 'category': item.get('category', 'other'),
@@ -692,8 +681,8 @@ def main():
         }
         lists_dict[list_data['id']] = list_data
 
-    selected_list = lists_dict.get(selected_list_id, {'items': [], 'budget_raw': 0.0, 'total_spent_raw': 0.0})  # Ensure default budget_raw
-    items = selected_list.get('items', [])  # Always a list due to above
+    selected_list = lists_dict.get(selected_list_id, {'items': [], 'budget_raw': 0.0, 'total_spent_raw': 0.0})
+    items = selected_list.get('items', [])
     insights = []
     if selected_list.get('budget_raw', 0.0) > 0:
         if selected_list['total_spent_raw'] > selected_list['budget_raw']:
@@ -702,23 +691,22 @@ def main():
             insights.append(trans('shopping_insight_under_budget', default='You are under budget. Consider allocating funds to savings.'))
 
     template_map = {
-        'create-list': 'shopping/create_list.html',
-        'add-items': 'shopping/add_items.html',
-        'view-lists': 'shopping/view_lists.html',
-        'manage-list': 'shopping/manage_list.html'
+        'create-list': 'personal/SHOPPING/shopping_create_list.html',
+        'add-items': 'personal/SHOPPING/shopping_add_items.html',
+        'view-lists': 'personal/SHOPPING/shopping_view_lists.html',
+        'manage-list': 'personal/SHOPPING/shopping_manage_list.html'
     }
 
-    # Prepopulate list_form with selected list data for manage-list tab
     if active_tab == 'manage-list' and selected_list.get('name'):
         list_form.name.data = selected_list.get('name', '')
         list_form.budget.data = selected_list.get('budget_raw', 0.0)
 
     return render_template(
-        f'{template_map[active_tab]}',
+        template_map[active_tab],
         list_form=list_form,
         item_form=item_form,
         share_form=share_form,
-        items_form=items_form,  # Pass new form for addItemsForm
+        items_form=items_form,
         lists=lists_dict,
         selected_list=selected_list,
         selected_list_id=selected_list_id,
@@ -732,9 +720,7 @@ def main():
         ],
         insights=insights,
         tool_title=trans('shopping_title', default='Shopping List Planner'),
-        active_tab=active_tab,
-        format_currency=format_currency,
-        format_datetime=format_date
+        active_tab=active_tab
     )
 
 @shopping_bp.route('/get_list_details', methods=['GET'])
@@ -758,9 +744,7 @@ def get_list_details():
     selected_list = {
         'id': str(shopping_list['_id']),
         'name': shopping_list.get('name', ''),
-        'budget': format_currency(float(shopping_list.get('budget', 0.0))),
         'budget_raw': float(shopping_list.get('budget', 0.0)),
-        'total_spent': format_currency(float(shopping_list.get('total_spent', 0.0))),
         'total_spent_raw': float(shopping_list.get('total_spent', 0.0)),
         'status': shopping_list.get('status', 'active'),
         'created_at': shopping_list.get('created_at'),
@@ -769,7 +753,7 @@ def get_list_details():
             'id': str(item['_id']),
             'name': item.get('name', ''),
             'quantity': int(item.get('quantity', 1)),
-            'price': float(item.get('price', 0.0)),
+            'price_raw': float(item.get('price', 0.0)),
             'unit': item.get('unit', 'piece'),
             'category': item.get('category', 'other'),
             'status': item.get('status', 'to_buy'),
@@ -780,15 +764,12 @@ def get_list_details():
     
     try:
         html = render_template(
-            'shopping/manage_list_details.html',
+            'personal/SHOPPING/manage_list_details.html',
             list_form=ShoppingListForm(data={'name': selected_list['name'], 'budget': selected_list['budget_raw']}),
             item_form=ShoppingItemsForm(),
             selected_list=selected_list,
             selected_list_id=list_id,
-            items=selected_list['items'],
-            format_currency=format_currency,
-            format_datetime=format_date,
-            trans=trans
+            items=selected_list['items']
         )
         return jsonify({'success': True, 'html': html, 'items': selected_list['items']})
     except Exception as e:
@@ -822,7 +803,6 @@ def manage_list(list_id):
                 except ValueError:
                     flash(trans('shopping_budget_invalid', default='Invalid budget value.'), 'danger')
                     return redirect(url_for('shopping.main', tab='manage-list', list_id=list_id))
-                # Check for duplicate item names
                 existing_items = db.shopping_items.find({'list_id': list_id}, {'name': 1})
                 existing_names = {item['name'].lower() for item in existing_items}
                 new_items = []
@@ -848,7 +828,6 @@ def manage_list(list_id):
                 deleted = 0
                 with db.client.start_session() as mongo_session:
                     with mongo_session.start_transaction():
-                        # Validate status transition
                         new_status = 'saved' if request.form.get('save_list') else shopping_list.get('status', 'active')
                         if shopping_list['status'] == 'saved' and new_status == 'active':
                             flash(trans('shopping_invalid_status_transition', default='Cannot change saved list back to active.'), 'danger')
@@ -975,18 +954,15 @@ def manage_list(list_id):
             list_data = {
                 'id': str(lst['_id']),
                 'name': lst.get('name', ''),
-                'budget': format_currency(float(lst.get('budget', 0.0))),
                 'budget_raw': float(lst.get('budget', 0.0)),
-                'total_spent': format_currency(float(lst.get('total_spent', 0.0))),
                 'total_spent_raw': float(lst.get('total_spent', 0.0)),
                 'status': lst.get('status', 'active'),
-                'created_at': lst.get('created_at').strftime('%Y-%m-%d') if lst.get('created_at') else 'N/A',
+                'created_at': lst.get('created_at'),
                 'collaborators': lst.get('collaborators', []),
                 'items': [{
                     'id': str(item['_id']),
                     'name': item.get('name', ''),
                     'quantity': int(item.get('quantity', 1)),
-                    'price': format_currency(float(item.get('price', 0.0))),
                     'price_raw': float(item.get('price', 0.0)),
                     'unit': item.get('unit', 'piece'),
                     'category': item.get('category', 'other'),
@@ -996,8 +972,8 @@ def manage_list(list_id):
                 } for item in list_items]
             }
             lists_dict[list_data['id']] = list_data
-        selected_list = lists_dict.get(list_id, {'items': [], 'budget_raw': 0.0, 'total_spent_raw': 0.0})  # Ensure default budget_raw
-        items = selected_list['items']  # Always a list due to above
+        selected_list = lists_dict.get(list_id, {'items': [], 'budget_raw': 0.0, 'total_spent_raw': 0.0})
+        items = selected_list['items']
         categories = {
             trans('shopping_category_fruits', default='Fruits'): sum(item['price_raw'] * item['quantity'] for item in items if item['category'] == 'fruits'),
             trans('shopping_category_vegetables', default='Vegetables'): sum(item['price_raw'] * item['quantity'] for item in items if item['category'] == 'vegetables'),
@@ -1024,7 +1000,7 @@ def manage_list(list_id):
                 insights.append(trans('shopping_insight_under_budget', default='You are under budget. Consider allocating funds to savings.'))
 
         return render_template(
-            'shopping/manage_list.html',
+            'personal/SHOPPING/shopping_manage_list.html',
             list_form=ShoppingListForm(data={'name': selected_list['name'], 'budget': selected_list['budget_raw']}),
             item_form=ShoppingItemsForm(),
             share_form=ShareListForm(),
@@ -1036,9 +1012,7 @@ def manage_list(list_id):
             tips=tips,
             insights=insights,
             tool_title=trans('shopping_title', default='Shopping List Planner'),
-            active_tab='manage-list',
-            format_currency=format_currency,
-            format_datetime=format_date
+            active_tab='manage-list'
         )
     except Exception as e:
         logger.error(f"Error managing list {list_id}: {str(e)}")
@@ -1192,7 +1166,7 @@ def handle_csrf_error(e):
 
 def init_app(app):
     try:
-        csrf.init_app(app)  # Initialize CSRFProtect
+        csrf.init_app(app)
         db = get_mongo_db()
         db.shopping_lists.create_index([('user_id', 1), ('status', 1), ('updated_at', -1)])
         db.shopping_items.create_index([('list_id', 1), ('created_at', -1)])
