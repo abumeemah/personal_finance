@@ -247,21 +247,6 @@
             </div>
         </div>
     </div>
-
-    {% if current_user.is_authenticated %}
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5>{{ t('general_share_ficore', default='Share Ficore Africa with Friends') }}</h5>
-            </div>
-            <div class="card-body">
-                <p>{{ t('general_share_ficore_invite', default='Invite your friends to join Ficore Africa and manage their finances better!') }}</p>
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" id="referralLink" value="{{ url_for('users.signup', ref=current_user.referral_code, _external=True) if current_user.referral_code else t('general_profile_no_referral', default='No referral link available.') }}" readonly>
-                    <button class="btn btn-secondary" type="button" onclick="copyReferralLink()">{{ t('general_profile_copy_link', default='Copy') }}</button>
-                </div>
-            </div>
-        </div>
-    {% endif %}
 </div>
 {% endblock %}
 
