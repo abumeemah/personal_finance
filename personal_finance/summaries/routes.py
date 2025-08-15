@@ -66,7 +66,7 @@ def get_recent_activities(user_id=None, is_admin_user=False, db=None):
         'shopping_lists': {
             'collection': 'shopping_lists',
             'required_fields': ['created_at', 'name'],
-            'type': 'shopping_list',
+            'type': 'shopping',  # Changed to 'shopping' to match JS filter
             'icon': 'bi-cart',
             'description_key': 'recent_activity_shopping_list_created',
             'default_description': 'Created shopping list: {name}',
@@ -78,7 +78,7 @@ def get_recent_activities(user_id=None, is_admin_user=False, db=None):
         'shopping_items': {
             'collection': 'shopping_items',
             'required_fields': ['updated_at', 'name', 'status'],
-            'type': 'shopping_item',
+            'type': 'shopping',  # Changed to 'shopping' to match JS filter
             'icon': 'bi-check-circle',
             'description_key': 'recent_activity_shopping_item_bought',
             'default_description': 'Bought item: {name}',
@@ -92,7 +92,7 @@ def get_recent_activities(user_id=None, is_admin_user=False, db=None):
         'ficore_credit_transactions': {
             'collection': 'ficore_credit_transactions',
             'required_fields': ['timestamp', 'amount', 'action'],
-            'type': 'ficore_credit',
+            'type': 'credits',  # Changed to 'credits' to match JS filter
             'icon': 'bi-wallet2',
             'description_key': 'recent_activity_ficore_credit',
             'default_description': '{action}: {amount} credits',
