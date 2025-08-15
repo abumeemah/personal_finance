@@ -419,7 +419,7 @@ def main():
                     for error in field_errors:
                         flash(f"{field.capitalize()}: {trans(error, default=error)}", 'danger')
                 return render_template(
-                    'create_list.html',
+                    'shopping/create_list.html',
                     list_form=list_form,
                     item_form=item_form,
                     share_form=share_form,
@@ -692,24 +692,24 @@ def main():
         }
         lists_dict[list_data['id']] = list_data
 
-    selected_list = lists_dict.get(selected_list_id, {'items': []})  # Ensure default empty items list
+    selected_list = lists_dict.get(selected_list_id, {'items': [], 'budget_raw': 0.0, 'total_spent_raw': 0.0})  # Ensure default budget_raw
     items = selected_list.get('items', [])  # Always a list due to above
     insights = []
-    if selected_list and selected_list['budget_raw'] > 0:
+    if selected_list.get('budget_raw', 0.0) > 0:
         if selected_list['total_spent_raw'] > selected_list['budget_raw']:
             insights.append(trans('shopping_insight_over_budget', default='You are over budget. Consider removing non-essential items.'))
         elif selected_list['total_spent_raw'] < selected_list['budget_raw'] * 0.5:
             insights.append(trans('shopping_insight_under_budget', default='You are under budget. Consider allocating funds to savings.'))
 
     template_map = {
-        'create-list': 'create_list.html',
-        'add-items': 'add_items.html',
-        'view-lists': 'view_lists.html',
-        'manage-list': 'manage_list.html'
+        'create-list': 'shopping/create_list.html',
+        'add-items': 'shopping/add_items.html',
+        'view-lists': 'shopping/view_lists.html',
+        'manage-list': 'shopping/manage_list.html'
     }
 
     # Prepopulate list_form with selected list data for manage-list tab
-    if active_tab == 'manage-list' and selected_list:
+    if active_tab == 'manage-list' and selected_list.get('name'):
         list_form.name.data = selected_list.get('name', '')
         list_form.budget.data = selected_list.get('budget_raw', 0.0)
 
@@ -780,7 +780,7 @@ def get_list_details():
     
     try:
         html = render_template(
-            'manage_list_details.html',
+            'shopping/manage_list_details.html',
             list_form=ShoppingListForm(data={'name': selected_list['name'], 'budget': selected_list['budget_raw']}),
             item_form=ShoppingItemsForm(),
             selected_list=selected_list,
@@ -980,7 +980,7 @@ def manage_list(list_id):
                 'total_spent': format_currency(float(lst.get('total_spent', 0.0))),
                 'total_spent_raw': float(lst.get('total_spent', 0.0)),
                 'status': lst.get('status', 'active'),
-                'created_at': lst.get('created_at'),
+                'created_at': lst.get('created_at').strftime('%Y-%m-%d') if lst.get('created_at') else 'N/A',
                 'collaborators': lst.get('collaborators', []),
                 'items': [{
                     'id': str(item['_id']),
@@ -996,7 +996,7 @@ def manage_list(list_id):
                 } for item in list_items]
             }
             lists_dict[list_data['id']] = list_data
-        selected_list = lists_dict.get(list_id, {'items': []})  # Ensure default empty items list
+        selected_list = lists_dict.get(list_id, {'items': [], 'budget_raw': 0.0, 'total_spent_raw': 0.0})  # Ensure default budget_raw
         items = selected_list['items']  # Always a list due to above
         categories = {
             trans('shopping_category_fruits', default='Fruits'): sum(item['price_raw'] * item['quantity'] for item in items if item['category'] == 'fruits'),
@@ -1017,14 +1017,14 @@ def manage_list(list_id):
             trans('shopping_tip_check_sales', default='Check for sales or discounts before shopping.')
         ]
         insights = []
-        if selected_list['budget_raw'] > 0:
+        if selected_list.get('budget_raw', 0.0) > 0:
             if selected_list['total_spent_raw'] > selected_list['budget_raw']:
                 insights.append(trans('shopping_insight_over_budget', default='You are over budget. Consider removing non-essential items.'))
             elif selected_list['total_spent_raw'] < selected_list['budget_raw'] * 0.5:
                 insights.append(trans('shopping_insight_under_budget', default='You are under budget. Consider allocating funds to savings.'))
 
         return render_template(
-            'manage_list.html',
+            'shopping/manage_list.html',
             list_form=ShoppingListForm(data={'name': selected_list['name'], 'budget': selected_list['budget_raw']}),
             item_form=ShoppingItemsForm(),
             share_form=ShareListForm(),
