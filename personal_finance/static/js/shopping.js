@@ -40,13 +40,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Helper function to format a number for display
-    function formatForDisplay(value, isInteger) {
+    function formatForDisplay(value, isInteger = false) {
         if (value === null || value === undefined || isNaN(value)) {
-            return isInteger ? '0' : '0.00';
+            return isInteger ? '0' : '₦0.00';
         }
-        return isInteger
-            ? parseInt(value).toLocaleString('en-US', { maximumFractionDigits: 0 })
-            : parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (isInteger) {
+            return parseInt(value).toLocaleString('en-NG', { maximumFractionDigits: 0 });
+        }
+        return parseFloat(value).toLocaleString('en-NG', { style: 'currency', currency: 'NGN' });
+    }
+
+    // Helper function to format a date
+    function formatDate(date) {
+        if (!date) return '';
+        const d = new Date(date);
+        return d.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: '2-digit' 
+        });
     }
 
     // Helper function to clean input for numeric parsing
@@ -75,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let rawValue = cleanForParse(input.value);
                 let numValue = isInteger ? parseInt(rawValue) : parseFloat(rawValue);
                 if (!isNaN(numValue) && numValue >= 0) {
-                    input.value = isInteger ? numValue.toString() : formatForDisplay(numValue, false);
+                    input.value = formatForDisplay(numValue, isInteger);
                 } else {
                     input.value = '';
                 }
@@ -109,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         input.classList.remove('is-invalid');
                         if (helpElement) helpElement.innerText = originalHelpText;
                     }
-                    input.value = numValue.toString();
+                    input.value = formatForDisplay(numValue, true);
                 } else {
                     if (!rawValue && input.hasAttribute('required')) {
                         input.classList.add('is-invalid');
@@ -129,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         input.classList.remove('is-invalid');
                         if (helpElement) helpElement.innerText = originalHelpText;
                     }
-                    input.value = allowCommas && !isNaN(numValue) ? formatForDisplay(numValue, false) : (isNaN(numValue) ? '' : numValue.toFixed(2));
+                    input.value = formatForDisplay(numValue, false);
                 }
                 updateBudgetProgress(input.closest('form'));
             });
@@ -163,9 +175,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (isInteger) {
                     if ((input.id.includes('quantity') || input.classList.contains('new-item-quantity')) && numValue > 1000) numValue = 1000;
                     if ((input.id.includes('frequency') || input.classList.contains('new-item-frequency')) && numValue > 365) numValue = 365;
-                    input.value = numValue.toString();
+                    input.value = formatForDisplay(numValue, true);
                 } else {
-                    input.value = allowCommas && !isNaN(numValue) ? formatForDisplay(numValue, false) : numValue.toFixed(2);
+                    input.value = formatForDisplay(numValue, false);
                 }
                 input.dispatchEvent(new Event('blur'));
                 updateBudgetProgress(input.closest('form'));
@@ -251,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             input.classList.remove('is-invalid');
                             if (helpElement) helpElement.innerText = helpTextTranslations[input.id.replace('edit-item-', '').replace('item-', '')] || helpTextTranslations['quantity'] || helpTextTranslations['frequency'];
                         }
-                        input.value = numValue.toString();
+                        input.value = formatForDisplay(numValue, true);
                     } else {
                         if (!rawValue && input.hasAttribute('required')) {
                             input.classList.add('is-invalid');
@@ -277,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             input.classList.remove('is-invalid');
                             if (helpElement) helpElement.innerText = helpTextTranslations[input.id.replace('edit-item-', '').replace('item-', '')] || helpTextTranslations['budget'] || helpTextTranslations['price'];
                         }
-                        input.value = allowCommas && !isNaN(numValue) ? formatForDisplay(numValue, false) : (isNaN(numValue) ? '' : numValue.toFixed(2));
+                        input.value = formatForDisplay(numValue, false);
                     }
                 });
 
@@ -316,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (nameInput) nameInput.value = name;
 
             const quantityInput = document.getElementById('edit-item-quantity');
-            if (quantityInput) quantityInput.value = quantity;
+            if (quantityInput) quantityInput.value = formatForDisplay(quantity, true);
 
             const priceInput = document.getElementById('edit-item-price');
             if (priceInput) priceInput.value = formatForDisplay(price, false);
@@ -334,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (storeInput) storeInput.value = store;
 
             const frequencyInput = document.getElementById('edit-item-frequency');
-            if (frequencyInput) frequencyInput.value = frequency;
+            if (frequencyInput) frequencyInput.value = formatForDisplay(frequency, true);
 
             const modal = new bootstrap.Modal(document.getElementById('editItemModal'));
             modal.show();
@@ -360,13 +372,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const newItem = {
                 id: id,
                 name: document.getElementById('edit-item-name')?.value.trim() || '',
-                quantity: parseInt(document.getElementById('edit-item-quantity')?.value) || 1,
+                quantity: parseInt(cleanForParse(document.getElementById('edit-item-quantity')?.value)) || 1,
                 price: parseFloat(cleanForParse(document.getElementById('edit-item-price')?.value)) || 0,
-                unit: document.getElementById('edit-item-unit')?.value || 'unit',
-                category: document.getElementById('edit-item-category')?.value || 'general',
-                status: document.getElementById('edit-item-status')?.value || 'pending',
+                unit: document.getElementById('edit-item-unit')?.value || 'piece',
+                category: document.getElementById('edit-item-category')?.value || 'other',
+                status: document.getElementById('edit-item-status')?.value || 'to_buy',
                 store: document.getElementById('edit-item-store')?.value.trim() || '',
-                frequency: parseInt(document.getElementById('edit-item-frequency')?.value) || 1
+                frequency: parseInt(cleanForParse(document.getElementById('edit-item-frequency')?.value)) || 7
             };
 
             if (!newItem.name.trim()) {
@@ -546,7 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (helpElement) helpElement.innerText = helpTextTranslations[input.id.replace('item-', '')] || helpTextTranslations['price'];
                 }
             }
-            input.value = isInteger ? numValue.toString() : (allowCommas && !isNaN(numValue) ? formatForDisplay(numValue, false) : (isNaN(numValue) ? '' : numValue.toFixed(2)));
+            input.value = formatForDisplay(numValue, isInteger);
         });
 
         if (!formIsValid) {
@@ -567,8 +579,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formData = new FormData(form);
         formData.set('item_price', cleanForParse(form.querySelector('#item_price').value));
-        formData.set('item_quantity', parseInt(form.querySelector('#item_quantity').value) || 1);
-        formData.set('item_frequency', parseInt(form.querySelector('#item_frequency').value) || 1);
+        formData.set('item_quantity', parseInt(cleanForParse(form.querySelector('#item_quantity').value)) || 1);
+        formData.set('item_frequency', parseInt(cleanForParse(form.querySelector('#item_frequency').value)) || 7);
 
         const submitButton = this;
         submitButton.disabled = true;
@@ -628,15 +640,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${item.name}</td>
-            <td>${item.quantity}</td>
-            <td>${formatForDisplay(item.price, false)}</td>
+            <td>${formatDate(item.created_at)}</td>
+            <td>${formatForDisplay(item.quantity, true)}</td>
+            <td>${formatForDisplay(item.price_raw, false)}</td>
             <td>${item.unit}</td>
             <td>${item.category}</td>
             <td>${item.status}</td>
             <td>${item.store || ''}</td>
-            <td>${item.frequency || ''}</td>
+            <td>${formatForDisplay(item.frequency, true)}</td>
             <td>
-                <button class="btn btn-sm btn-primary" onclick="openEditModal('${item.id}', '${item.name}', ${item.quantity}, ${item.price}, '${item.unit}', '${item.category}', '${item.status}', '${item.store || ''}', ${item.frequency || 1})">
+                <button class="btn btn-sm btn-primary" onclick="openEditModal('${item.id}', '${item.name}', ${item.quantity}, ${item.price_raw}, '${item.unit}', '${item.category}', '${item.status}', '${item.store || ''}', ${item.frequency || 7})">
                     <i class="fa-solid fa-edit"></i>
                 </button>
                 <form class="delete-item-form d-inline" method="POST" action="${document.getElementById('addItemForm').action}">
@@ -662,7 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const priceInput = form.querySelectorAll('.new-item-price')[index];
                 const nameInput = form.querySelectorAll('.new-item-name')[index];
                 if (nameInput?.value.trim()) {
-                    const quantity = parseInt(quantityInput.value) || 0;
+                    const quantity = parseInt(cleanForParse(quantityInput.value)) || 0;
                     const price = parseFloat(cleanForParse(priceInput.value)) || 0;
                     total += quantity * price;
                 }
@@ -727,7 +740,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="empty-state text-center">
                     <i class="fa-solid fa-cart-shopping fa-3x mb-3"></i>
                     <p>No active list selected. Please select an active list to manage.</p>
-                    <a href="/personal/shopping?tab=create-list" class="btn btn-primary">
+                    <a href="/shopping?tab=create-list" class="btn btn-primary">
                         <i class="fa-solid fa-plus"></i> Create List
                     </a>
                 </div>
@@ -743,7 +756,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        fetch(window.SHOPPING_GET_LIST_DETAILS_URL + '?list_id=' + encodeURIComponent(listId) + '&tab=' + encodeURIComponent(tab), {
+        fetch('/shopping/get_list_details?list_id=' + encodeURIComponent(listId) + '&tab=' + encodeURIComponent(tab), {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
@@ -769,7 +782,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="empty-state text-center">
                         <i class="fa-solid fa-exclamation-triangle fa-3x mb-3"></i>
                         <p>${data.error || "Failed to load list details. Please try again."}</p>
-                        <a href="/personal/shopping?tab=create-list" class="btn btn-primary">
+                        <a href="/shopping?tab=create-list" class="btn btn-primary">
                             <i class="fa-solid fa-plus"></i> Create List
                         </a>
                     </div>
@@ -783,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="empty-state text-center">
                     <i class="fa-solid fa-exclamation-triangle fa-3x mb-3"></i>
                     <p>Failed to load list details. Please try again.</p>
-                    <a href="/personal/shopping?tab=create-list" class="btn btn-primary">
+                    <a href="/shopping?tab=create-list" class="btn btn-primary">
                         <i class="fa-solid fa-plus"></i> Create List
                     </a>
                 </div>
