@@ -1261,4 +1261,4 @@ def init_app(app):
     try:
         csrf.init_app(app)
         db = get_mongo_db()
-        db.shopping_lists.create_index([('user_id', 1), ('status', 1), ('updated_at'1)])
+        db.shopping_lists.create_index([('user_id', 1), ('status', 1), ('updated_at', 1)])
