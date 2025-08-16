@@ -126,7 +126,7 @@ def initialize_app_data(app):
                                 'housing': {'bsonType': 'double', 'minimum': 0},
                                 'food': {'bsonType': 'double', 'minimum': 0},
                                 'transport': {'bsonType': 'double', 'minimum': 0},
-                                'dependents': {'bsonType': 'double', 'minimum': 0},
+                                'dependents': {'bsonType': ['int', 'double'], 'minimum': 0},
                                 'miscellaneous': {'bsonType': 'double', 'minimum': 0},
                                 'others': {'bsonType': 'double', 'minimum': 0},
                                 'created_at': {'bsonType': 'date'}
