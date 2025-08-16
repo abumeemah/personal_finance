@@ -1262,3 +1262,5 @@ def init_app(app):
         csrf.init_app(app)
         db = get_mongo_db()
         db.shopping_lists.create_index([('user_id', 1), ('status', 1), ('updated_at', 1)])
+    except Exception as e:
+        logger.error(f"Error initializing shopping app: {str(e)}", exc_info=True)
